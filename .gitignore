@@ -1,0 +1,24 @@
+# secrets
+.env
+.env.*
+app/.env
+app/.env.*
+
+# local data
+data/dev.db
+data/uploads/
+app/prisma/*.db
+app/prisma/*.db-journal
+
+# build/runtime
+node_modules/
+app/node_modules/
+.next/
+app/.next/
+dist/
+build/
+
+# local ops
+.patch_backups/
+Patch/
+*.log

@@ -1,0 +1,12 @@
+services:
+  artist-vault:
+    build: ./app
+    container_name: artist-vault
+    restart: unless-stopped
+    env_file:
+      - ./app/.env
+    ports:
+      - "127.0.0.1:3002:3000"
+    volumes:
+      - ./data/dev.db:/app/dev.db
+      - ./data/uploads:/app/public/uploads
