@@ -22,3 +22,8 @@ build/
 .patch_backups/
 Patch/
 *.log
+
+# ssh keys
+*.pub
+id_ed25519
+id_ed25519.*
