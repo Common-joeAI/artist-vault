@@ -1,0 +1,93 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Artist Vault Connector</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #0a0a12;
+        color: #ffffff;
+        margin: 0;
+        padding: 14px;
+        min-width: 360px;
+      }
+      h3 {
+        margin: 0 0 8px;
+      }
+      p {
+        color: rgba(255,255,255,0.7);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+      label {
+        display: block;
+        font-size: 12px;
+        margin: 12px 0 6px;
+        color: #c9bbff;
+      }
+      input, textarea {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid rgba(255,255,255,0.15);
+        background: #141424;
+        color: white;
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-size: 13px;
+      }
+      button {
+        width: 100%;
+        margin-top: 12px;
+        border: 0;
+        border-radius: 12px;
+        padding: 11px 14px;
+        font-weight: 700;
+        background: #6d3df5;
+        color: white;
+        cursor: pointer;
+      }
+      button.secondary {
+        background: rgba(255,255,255,0.08);
+      }
+      .status {
+        margin-top: 12px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: rgba(255,255,255,0.05);
+        font-size: 12px;
+        line-height: 1.5;
+        white-space: pre-wrap;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+      }
+      .row button {
+        width: auto;
+        flex: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <h3>Artist Vault Connector</h3>
+    <p>Paste the import token from Artist Vault, confirm the vault URL, then start the DistroKid import from a page that lists releases.</p>
+
+    <label for="vaultBaseUrl">Artist Vault base URL</label>
+    <input id="vaultBaseUrl" placeholder="https://aiartistvault.com" />
+
+    <label for="sessionToken">Import token</label>
+    <textarea id="sessionToken" rows="4" placeholder="Paste import token here"></textarea>
+
+    <div class="row">
+      <button id="saveSettings" class="secondary" type="button">Save</button>
+      <button id="openVault" class="secondary" type="button">Open Vault</button>
+    </div>
+
+    <button id="startImport" type="button">Start import</button>
+
+    <div class="status" id="status">Ready.</div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
