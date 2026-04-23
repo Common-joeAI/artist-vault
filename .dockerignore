@@ -1,0 +1,9 @@
+node_modules
+.next
+.git
+.patch_backups
+Patch
+*.zip
+npm-debug.log
+dev.db
+prisma/dev.db
