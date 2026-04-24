@@ -9,6 +9,7 @@ services:
       - ./data/dev.db:/app/dev.db
       - ./data/uploads:/app/public/uploads
       - ./data/storage:/app/storage
+      - ./data/storage:/app/.next/standalone/storage
     network_mode: host
     environment:
       PORT: "3002"
