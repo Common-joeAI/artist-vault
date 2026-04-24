@@ -1,70 +1,72 @@
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message?.type !== "AV_START_IMPORT") return undefined;
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type !== "AV_START_IMPORT") {
+    return;
+  }
 
-  startImport(message)
-    .then((result) => sendResponse({ ok: true, message: result }))
-    .catch(async (error) => {
-      const message = error instanceof Error ? error.message : "Import failed.";
-      await setStatus(`Import failed.\n${message}`);
-      sendResponse({ ok: false, message });
+  startImport(message, sender)
+    .then((result) => sendResponse(result))
+    .catch((error) => {
+      const messageText = error instanceof Error ? error.message : "Import failed.";
+      chrome.storage.local.set({ avImportStatus: messageText });
+      sendResponse({ ok: false, message: messageText });
     });
 
   return true;
 });
 
-async function startImport(message) {
-  const baseUrl = String(message.vaultBaseUrl || message.baseUrl || message.vaultOrigin || "https://www.aiartistvault.com").trim().replace(/\/$/, "");
-  const token = String(message.sessionToken || message.importToken || message.token || "").trim();
+async function startImport(message, sender) {
+  const baseUrl = normalizeBaseUrl(message.vaultBaseUrl || message.baseUrl || message.vaultOrigin || "https://aiartistvault.com");
+  const sessionToken = String(message.sessionToken || message.token || "").trim();
 
-  if (!baseUrl) throw new Error("Missing vault base URL.");
-  if (!token) throw new Error("Missing import token.");
-
-  await setStatus("Looking for a DistroKid tab...");
-
-  let tab = await getActiveDistroKidTab();
-  if (!tab) {
-    tab = await chrome.tabs.create({ url: "https://distrokid.com/dashboard", active: true });
-    await waitForTabComplete(tab.id);
+  if (!sessionToken) {
+    throw new Error("Missing import token.");
   }
 
-  if (!tab?.id) {
-    throw new Error("Could not open a DistroKid tab.");
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const activeTab = tab || sender?.tab;
+
+  if (!activeTab?.id) {
+    throw new Error("No active DistroKid tab found.");
   }
 
-  await setStatus("Discovering release links...");
-  const discovery = await sendTabMessage(tab.id, { type: "AV_DISCOVER_RELEASES" });
+  await chrome.storage.local.set({ avImportStatus: "Finding DistroKid releases..." });
+
+  const discovery = await sendTabMessage(activeTab.id, { type: "AV_DISCOVER_RELEASES" });
   let releaseLinks = Array.isArray(discovery?.releaseLinks) ? unique(discovery.releaseLinks) : [];
 
-  if (!releaseLinks.length && tab.url && /albumuuid=/i.test(tab.url)) {
-    releaseLinks = [tab.url];
+  if (!releaseLinks.length && activeTab.url && /albumuuid=/i.test(activeTab.url)) {
+    releaseLinks = [activeTab.url];
   }
 
   if (!releaseLinks.length) {
     throw new Error("No DistroKid release links were found. Open either your DistroKid release list or an individual album page, then try again.");
   }
 
-  await setStatus(`Found ${releaseLinks.length} release links. Scraping pages...`);
-
   const releases = [];
   const errors = [];
 
   for (let index = 0; index < releaseLinks.length; index += 1) {
     const releaseUrl = releaseLinks[index];
-    await setStatus(`Scraping ${index + 1}/${releaseLinks.length}\n${releaseUrl}`);
+
+    await chrome.storage.local.set({
+      avImportStatus: `Scraping release ${index + 1} of ${releaseLinks.length}...`
+    });
 
     try {
-      const release = await scrapeReleasePage(releaseUrl);
-      if (release) {
-        releases.push(release);
-      } else {
-        errors.push(`No structured release data returned for ${releaseUrl}`);
-      }
+      const release = await scrapeReleaseInTab(releaseUrl);
+      releases.push(release);
     } catch (error) {
-      errors.push(`Failed to scrape ${releaseUrl}: ${error instanceof Error ? error.message : "Unknown error."}`);
+      errors.push(`${releaseUrl}: ${error instanceof Error ? error.message : "Unknown scrape error."}`);
     }
   }
 
-  await setStatus(`Pushing ${releases.length} releases to Artist Vault...`);
+  if (!releases.length) {
+    throw new Error(errors.length ? errors.join("\n") : "No releases could be scraped.");
+  }
+
+  await chrome.storage.local.set({
+    avImportStatus: `Sending ${releases.length} release(s) to Artist Vault...`
+  });
 
   const response = await fetch(`${baseUrl}/api/import/distrokid/push`, {
     method: "POST",
@@ -72,83 +74,136 @@ async function startImport(message) {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
+      session_token: sessionToken,
+      sessionToken,
       provider: "distrokid",
-      connector_version: "0.1.0",
-      session_token: token,
-      releases
+      releases,
+      errors
     })
   });
 
+  const data = await response.json().catch(() => ({}));
+
   if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Vault rejected import: ${response.status} ${text}`);
+    throw new Error(data?.error || data?.message || `Artist Vault returned ${response.status}.`);
   }
 
-  const result = await response.json();
-  let statusMessage = `Import finished.\nImported releases: ${result.release_count ?? releases.length}`;
+  const statusMessage = data?.message || `Import complete. Sent ${releases.length} release(s).`;
 
-  if (errors.length) {
-    statusMessage += `\nWarnings: ${errors.length}`;
-  }
-
-  await setStatus(statusMessage);
-  return statusMessage;
-}
-
-async function getActiveDistroKidTab() {
-  const tabs = await chrome.tabs.query({
-    url: ["https://distrokid.com/*", "https://*.distrokid.com/*"]
+  await chrome.storage.local.set({
+    avImportStatus: statusMessage
   });
 
-  if (!tabs.length) return null;
-  return tabs.find((tab) => tab.active) || tabs[0];
+  return {
+    ok: true,
+    message: statusMessage,
+    releasesImported: releases.length,
+    errors
+  };
 }
 
-async function scrapeReleasePage(url) {
-  const tab = await chrome.tabs.create({ url, active: false });
-  if (!tab?.id) {
-    throw new Error("Could not create background tab.");
+async function scrapeReleaseInTab(releaseUrl) {
+  const tab = await chrome.tabs.create({
+    url: releaseUrl,
+    active: false
+  });
+
+  if (!tab.id) {
+    throw new Error("Could not open release tab.");
   }
 
   try {
     await waitForTabComplete(tab.id);
-    return await sendTabMessage(tab.id, { type: "AV_SCRAPE_RELEASE_PAGE" });
-  } finally {
-    try {
-      await chrome.tabs.remove(tab.id);
-    } catch (_error) {
-      // ignore
+    await sleep(2500);
+
+    const scraped = await sendTabMessage(tab.id, { type: "AV_SCRAPE_RELEASE_PAGE" });
+
+    if (scraped?.error) {
+      throw new Error(scraped.error);
     }
+
+    if (!scraped?.source_release_id) {
+      throw new Error("Release page returned no release ID.");
+    }
+
+    return scraped;
+  } finally {
+    chrome.tabs.remove(tab.id).catch(() => undefined);
   }
 }
 
-async function waitForTabComplete(tabId) {
-  return await new Promise((resolve, reject) => {
+function sendTabMessage(tabId, message) {
+  return new Promise((resolve, reject) => {
+    chrome.tabs.sendMessage(tabId, message, (response) => {
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message));
+        return;
+      }
+
+      resolve(response);
+    });
+  });
+}
+
+function waitForTabComplete(tabId) {
+  return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
       chrome.tabs.onUpdated.removeListener(listener);
-      reject(new Error("Timed out waiting for DistroKid tab to finish loading."));
+      reject(new Error("Timed out waiting for DistroKid page to load."));
     }, 30000);
 
-    function listener(updatedTabId, changeInfo) {
+    const listener = (updatedTabId, changeInfo) => {
       if (updatedTabId === tabId && changeInfo.status === "complete") {
         clearTimeout(timeout);
         chrome.tabs.onUpdated.removeListener(listener);
         resolve();
       }
-    }
+    };
 
     chrome.tabs.onUpdated.addListener(listener);
+
+    chrome.tabs.get(tabId, (tab) => {
+      if (chrome.runtime.lastError) return;
+
+      if (tab?.status === "complete") {
+        clearTimeout(timeout);
+        chrome.tabs.onUpdated.removeListener(listener);
+        resolve();
+      }
+    });
   });
 }
 
-async function sendTabMessage(tabId, message) {
-  return await chrome.tabs.sendMessage(tabId, message);
-}
+function normalizeBaseUrl(value) {
+  let raw = String(value || "").trim();
 
-async function setStatus(message) {
-  await chrome.storage.local.set({ avImportStatus: message });
+  if (!raw) {
+    raw = "https://aiartistvault.com";
+  }
+
+  if (!/^https?:\/\//i.test(raw)) {
+    raw = `https://${raw}`;
+  }
+
+  raw = raw.replace(/\/+$/, "");
+
+  try {
+    const parsed = new URL(raw);
+
+    if (parsed.hostname === "www.aiartistvault.com") {
+      parsed.hostname = "aiartistvault.com";
+    }
+
+    return parsed.origin;
+  } catch (_error) {
+    return "https://aiartistvault.com";
+  }
 }
 
 function unique(values) {
-  return [...new Set(values)];
+  return Array.from(new Set(values.filter(Boolean)));
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
