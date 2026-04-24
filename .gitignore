@@ -23,3 +23,6 @@ app/.patch_backups/
 app/**/*.bak
 app/*.bak.*
 app/**/*.bak.*
+
+browser-extension/**/*.bak.*
+app/browser-extension/**/*.bak.*
