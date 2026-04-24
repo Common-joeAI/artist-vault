@@ -1,0 +1,222 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum ReleaseType {
+  SINGLE
+  EP
+  ALBUM
+}
+
+enum RegistrationStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  SUBMITTED
+  APPROVED
+}
+
+enum UploadCategory {
+  press
+  covers
+  masters
+  previews
+  misc
+}
+
+enum MetadataEnhancementStatus {
+  queued
+  processing
+  completed
+  failed
+}
+
+enum LyricsSource {
+  provider
+  transcription
+  manual
+}
+
+model User {
+  id             String          @id @default(cuid())
+  email          String          @unique
+  passwordHash   String
+  name           String?
+  role           String          @default("owner")
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  uploads        Upload[]
+  artistProfiles ArtistProfile[]
+}
+
+model Upload {
+  id               String         @id @default(cuid())
+  filename         String
+  originalName     String
+  contentType      String
+  size             Int
+  category         UploadCategory @default(misc)
+  relativePath     String
+  publicUrl        String
+  uploadedAt       DateTime       @default(now())
+  uploadedByUserId String?
+  uploadedByUser   User?          @relation(fields: [uploadedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([category, uploadedAt])
+  @@index([uploadedByUserId, uploadedAt])
+}
+
+model ArtistProfile {
+  id          String       @id @default(cuid())
+  ownerUserId String?
+  name        String
+  bio         String?
+  photoUrl    String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  ownerUser   User?        @relation(fields: [ownerUserId], references: [id], onDelete: SetNull)
+  links       ArtistLink[]
+  releases    Release[]
+  pressKits   PressKit[]
+
+  @@index([ownerUserId, createdAt])
+}
+
+model ArtistLink {
+  id         String        @id @default(cuid())
+  artistId   String
+  platform   String
+  label      String?
+  url        String
+  createdAt  DateTime      @default(now())
+  artist     ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@index([artistId, platform])
+}
+
+model Release {
+  id               String               @id @default(cuid())
+  artistId         String
+  title            String
+  releaseType      ReleaseType          @default(SINGLE)
+  distributor      String?
+  releaseDate      DateTime?
+  coverArtUrl      String?
+  spotifyUrl       String?
+  appleMusicUrl    String?
+  youtubeMusicUrl  String?
+  notes            String?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  artist           ArtistProfile        @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  tracks           Track[]
+
+  @@index([artistId, releaseDate])
+}
+
+model Track {
+  id                 String              @id @default(cuid())
+  releaseId          String
+  title              String
+  trackNumber        Int?
+  isrc               String?
+  lyrics             String?
+  masterFileUrl      String?
+  audioPreviewUrl    String?
+  durationSeconds    Int?
+  bpm                Int?
+  explicit           Boolean             @default(false)
+  ascapStatus        RegistrationStatus  @default(NOT_STARTED)
+  bmiStatus          RegistrationStatus  @default(NOT_STARTED)
+  ascapWorkId        String?
+  bmiWorkId          String?
+  writers            String?
+  producers          String?
+  splitNotes         String?
+  enhancerStatus             MetadataEnhancementStatus @default(queued)
+  enhancedAt                 DateTime?
+  lastEnhancementError       String?
+
+  recognizedTitle            String?
+  recognizedArtist           String?
+  recognizedAlbum            String?
+  recognizedLabel            String?
+  recognizedReleaseDate      DateTime?
+
+  upc                        String?
+  distributorName            String?
+  distributionKnown          Boolean?
+  distributionStatusText     String?
+
+  streamingLinksJson         Json?
+  providerRawJson            Json?
+  aiEnhancedJson             Json?
+
+  lyricsText                 String?
+  lyricsStructuredJson       Json?
+  lyricsLrc                  String?
+  lyricsSrt                  String?
+  lyricsSource               LyricsSource?
+  lyricsConfidence           Float?
+
+  ascapNotes                 String?
+  bmiNotes                   String?
+  humanAuthorshipFlagsJson   Json?
+  suggestedWriterSplitsJson  Json?
+  pressKitSuggestionsJson    Json?
+
+  metadataJobs               MetadataEnhancementJob[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  release            Release             @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+
+  @@index([releaseId, trackNumber])
+  @@index([isrc])
+}
+
+model PressKit {
+  id            String        @id @default(cuid())
+  artistId      String
+  title         String
+  slug          String        @unique
+  isPublic      Boolean       @default(true)
+  shortBio      String?
+  longBio       String?
+  heroImageUrl  String?
+  websiteUrl    String?
+  contactEmail  String?
+  generatedAt   DateTime      @default(now())
+  artist        ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
+}
+
+model MetadataEnhancementJob {
+  id                    String   @id @default(cuid())
+  trackId               String
+  track                 Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  status                MetadataEnhancementStatus @default(queued)
+  startedAt             DateTime?
+  completedAt           DateTime?
+  failedAt              DateTime?
+
+  sourceFileName        String?
+  sourceMimeType        String?
+  sourceByteSize        Int?
+
+  transcriptionProvider String?
+  aiModel               String?
+
+  requestJson           Json?
+  resultJson            Json?
+  errorJson             Json?
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([trackId, createdAt])
+  @@index([status, createdAt])
+}

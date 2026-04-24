@@ -1,0 +1,79 @@
+/// Merge these fields into your existing Prisma schema.
+/// This file is a reference patch, not a full schema replacement.
+
+enum MetadataEnhancementStatus {
+  queued
+  processing
+  completed
+  failed
+}
+
+enum LyricsSource {
+  provider
+  transcription
+  manual
+}
+
+model MetadataEnhancementJob {
+  id                    String   @id @default(cuid())
+  trackId               String
+  track                 Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  status                MetadataEnhancementStatus @default(queued)
+  startedAt             DateTime?
+  completedAt           DateTime?
+  failedAt              DateTime?
+
+  sourceFileName        String?
+  sourceMimeType        String?
+  sourceByteSize        Int?
+
+  transcriptionProvider String?
+  aiModel               String?
+
+  requestJson           Json?
+  resultJson            Json?
+  errorJson             Json?
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([trackId, createdAt])
+  @@index([status, createdAt])
+}
+
+/// Add these fields to your existing Track model:
+///
+/// enhancerStatus             MetadataEnhancementStatus @default(queued)
+/// enhancedAt                 DateTime?
+/// lastEnhancementError       String?
+///
+/// recognizedTitle            String?
+/// recognizedArtist           String?
+/// recognizedAlbum            String?
+/// recognizedLabel            String?
+/// recognizedReleaseDate      DateTime?
+///
+/// upc                        String?
+/// distributorName            String?
+/// distributionKnown          Boolean?
+/// distributionStatusText     String?
+///
+/// streamingLinksJson         Json?
+/// providerRawJson            Json?
+/// aiEnhancedJson             Json?
+///
+/// lyricsText                 String?
+/// lyricsStructuredJson       Json?
+/// lyricsLrc                  String?
+/// lyricsSrt                  String?
+/// lyricsSource               LyricsSource?
+/// lyricsConfidence           Float?
+///
+/// ascapNotes                 String?
+/// bmiNotes                   String?
+/// humanAuthorshipFlagsJson   Json?
+/// suggestedWriterSplitsJson  Json?
+/// pressKitSuggestionsJson    Json?
+///
+/// metadataJobs               MetadataEnhancementJob[]

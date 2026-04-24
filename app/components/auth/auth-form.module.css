@@ -1,0 +1,125 @@
+.panel {
+  width: min(560px, calc(100vw - 2rem));
+  margin: 4rem auto;
+  padding: 2rem;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015));
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.36);
+}
+
+.title {
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  margin: 0.6rem 0 0.75rem;
+}
+
+.copy {
+  color: #aab3c2;
+  line-height: 1.7;
+}
+
+.form {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.row {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.label {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.input {
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #11111a;
+  color: #f4f7fb;
+  padding: 0.95rem 1rem;
+}
+
+.input:focus {
+  outline: none;
+  border-color: rgba(139, 0, 255, 0.6);
+  box-shadow: 0 0 0 4px rgba(139, 0, 255, 0.14);
+}
+
+.button {
+  margin-top: 0.5rem;
+  border: 0;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #8b00ff, #a855f7);
+  color: white;
+  padding: 0.95rem 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.error {
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fecaca;
+}
+
+.note {
+  margin-top: 1rem;
+  color: #aab3c2;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.linkRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1.25rem;
+  color: #aab3c2;
+  font-size: 0.95rem;
+}
+
+.linkRow a {
+  color: #e9ddff;
+}
+
+.helper {
+  margin-top: 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.helper strong {
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+@media (max-width: 640px) {
+  .panel {
+    padding: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  .row {
+    grid-template-columns: 1fr;
+  }
+}

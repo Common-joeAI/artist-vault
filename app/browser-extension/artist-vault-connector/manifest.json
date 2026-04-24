@@ -1,0 +1,50 @@
+{
+  "manifest_version": 3,
+  "name": "Artist Vault Connector",
+  "version": "0.1.1",
+  "description": "Import release metadata from DistroKid into Artist Vault.",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1/*",
+    "http://localhost/*",
+    "https://*.aiartistvault.com/*",
+    "https://*.darkkeangelzz.live/*",
+    "https://*.distrokid.com/*",
+    "https://aiartistvault.com/*",
+    "https://distrokid.com/*",
+    "https://www.aiartistvault.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Artist Vault Connector",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://distrokid.com/*",
+        "https://*.distrokid.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://aiartistvault.com/*",
+        "https://www.aiartistvault.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

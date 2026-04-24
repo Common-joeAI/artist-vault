@@ -1,0 +1,75 @@
+.panel {
+  width: min(480px, calc(100vw - 2rem));
+  margin: 4rem auto;
+  padding: 2rem;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.title {
+  font-size: 2rem;
+  margin: 0.5rem 0 0.75rem;
+}
+
+.copy {
+  color: #aab3c2;
+  line-height: 1.7;
+}
+
+.form {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.label {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.input {
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #11111a;
+  color: #f4f7fb;
+  padding: 0.95rem 1rem;
+}
+
+.button {
+  margin-top: 0.5rem;
+  border: 0;
+  border-radius: 14px;
+  background: #7c3aed;
+  color: white;
+  padding: 0.95rem 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.error {
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fecaca;
+}
+
+.note {
+  margin-top: 1rem;
+  color: #aab3c2;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
