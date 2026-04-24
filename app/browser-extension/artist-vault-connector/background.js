@@ -33,10 +33,14 @@ async function startImport(message) {
 
   await setStatus("Discovering release links...");
   const discovery = await sendTabMessage(tab.id, { type: "AV_DISCOVER_RELEASES" });
-  const releaseLinks = Array.isArray(discovery?.releaseLinks) ? unique(discovery.releaseLinks) : [];
+  let releaseLinks = Array.isArray(discovery?.releaseLinks) ? unique(discovery.releaseLinks) : [];
+
+  if (!releaseLinks.length && tab.url && /albumuuid=/i.test(tab.url)) {
+    releaseLinks = [tab.url];
+  }
 
   if (!releaseLinks.length) {
-    throw new Error("No DistroKid release links were found on the current page. Open a page that lists releases, then try again.");
+    throw new Error("No DistroKid release links were found. Open either your DistroKid release list or an individual album page, then try again.");
   }
 
   await setStatus(`Found ${releaseLinks.length} release links. Scraping pages...`);

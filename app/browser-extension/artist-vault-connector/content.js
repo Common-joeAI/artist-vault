@@ -1,187 +1,14 @@
-function readVaultImportContext() {
-  const tokenInput =
-    document.querySelector("#distrokid-import-token") ||
-    document.querySelector('textarea[id*="token"]') ||
-    document.querySelector('input[id*="token"]');
-
-  const originInput =
-    document.querySelector('input[value^="https://www.aiartistvault.com"]') ||
-    document.querySelector('input[value^="https://aiartistvault.com"]');
-
-  const token =
-    tokenInput && "value" in tokenInput
-      ? String(tokenInput.value || "").trim()
-      : "";
-
-  const vaultOrigin =
-    originInput && "value" in originInput && String(originInput.value || "").trim()
-      ? String(originInput.value || "").trim()
-      : window.location.origin;
-
-  return {
-    ok: true,
-    token,
-    vaultOrigin,
-    pageUrl: window.location.href,
-    pageTitle: document.title,
-  };
-}
-
-function discoverReleaseLinks() {
-  const links = Array.from(
-    document.querySelectorAll('a[href*="album/?albumuuid="], a[href*="/dashboard/album/?albumuuid="]')
-  )
-    .map((a) => a.href)
-    .filter(Boolean);
-
-  return [...new Set(links)];
-}
-
-function scrapeReleasePage() {
-  const pageText = document.body?.innerText || "";
-
-  const headingCandidates = Array.from(document.querySelectorAll("h1, h2, h3"))
-    .map((el) => (el.textContent || "").trim())
-    .filter(Boolean)
-    .filter((t) => !/^help$/i.test(t))
-    .filter((t) => !/^(stores?|lyrics?|edit|view|support)$/i.test(t))
-    .sort((a, b) => b.length - a.length);
-
-  let title = headingCandidates[0] || "Untitled Release";
-
-  const artistCandidate = Array.from(document.querySelectorAll("h1 + div, h2 + div, h3 + div"))
-    .map((el) => (el.textContent || "").trim())
-    .find(Boolean);
-
-  const artist = artistCandidate || null;
-
-  const upcMatch = pageText.match(/UPC:\s*(\d{8,})/i);
-  const upc = upcMatch ? upcMatch[1] : null;
-
-  const releaseDateMatch = pageText.match(/Release date:\s*([A-Za-z]{3,9}\s+\d{1,2},\s+\d{4}|\d{4}-\d{2}-\d{2})/i);
-  const releaseDate = releaseDateMatch ? releaseDateMatch[1] : null;
-
-  const labelMatch = pageText.match(/Label:\s*([^\n]+)/i);
-  const labelName = labelMatch ? labelMatch[1].trim() : null;
-
-  const storeLinks = Array.from(document.querySelectorAll("a[href]"))
-    .map((a) => ({
-      name: ((a.textContent || "").trim() || new URL(a.href, window.location.href).hostname),
-      url: a.href,
-    }))
-    .filter((s) => /^https?:/i.test(s.url))
-    .filter((s) => /spotify|apple|itunes|youtube/i.test((s.name || "") + " " + s.url));
-
-  if (!title || /^help$/i.test(title)) {
-    const fallbackUrl =
-      (storeLinks.find((s) => /apple|itunes/i.test((s.name || "") + " " + s.url)) || {}).url ||
-      (storeLinks.find((s) => /spotify/i.test((s.name || "") + " " + s.url)) || {}).url ||
-      "";
-
-    const slugMatch = fallbackUrl.match(/album\/([^/?]+)/i);
-    if (slugMatch && slugMatch[1]) {
-      title = slugMatch[1]
-        .replace(/-single$/i, "")
-        .replace(/-ep$/i, "")
-        .replace(/-\d+$/i, "")
-        .replace(/-/g, " ")
-        .replace(/\b\w/g, (c) => c.toUpperCase())
-        .trim();
-    }
-  }
-
-  const tracks = [];
-  const seenIsrc = new Set();
-
-  Array.from(document.querySelectorAll("tr")).forEach((row) => {
-    const fullText = row.innerText || "";
-    const isrcMatch = fullText.match(/[A-Z]{2}[A-Z0-9]{3}\d{7}/);
-
-    if (!isrcMatch) return;
-
-    const isrc = isrcMatch[0];
-    if (seenIsrc.has(isrc)) return;
-    seenIsrc.add(isrc);
-
-    const cells = Array.from(row.querySelectorAll("td"));
-    const candidateTexts = cells
-      .map((c) => (c.innerText || "").trim())
-      .filter(Boolean)
-      .map((t) => t.replace(/\s+/g, " ").trim())
-      .filter((t) => !/[A-Z]{2}[A-Z0-9]{3}\d{7}/.test(t))
-      .filter((t) => !/lyrics|edit|view|help|spotify|apple|youtube|credits|hyperfollow/i.test(t))
-      .filter((t) => t.length > 2);
-
-    let trackTitle = candidateTexts[0] || null;
-
-    if (!trackTitle) {
-      const lines = fullText
-        .split("\n")
-        .map((t) => t.trim())
-        .filter(Boolean)
-        .filter((t) => !/[A-Z]{2}[A-Z0-9]{3}\d{7}/.test(t))
-        .filter((t) => !/lyrics|edit|view|help|spotify|apple|youtube|credits|hyperfollow/i.test(t))
-        .filter((t) => t.length > 2);
-
-      trackTitle = lines[0] || null;
-    }
-
-    tracks.push({
-      source_track_id: isrc,
-      track_number: tracks.length + 1,
-      title: trackTitle || ("Track " + (tracks.length + 1)),
-      isrc,
-      duration_text: null,
-      explicit: null,
-    });
-  });
-
-  const artwork =
-    document.querySelector('img[src*="cloudfront"], img[src*="distrokid"], img')?.src || null;
-
-  return {
-    source_release_id: new URL(window.location.href).searchParams.get("albumuuid") || window.location.href,
-    title: title || "Untitled Release",
-    artist_name: artist,
-    release_date: releaseDate,
-    upc,
-    label_name: labelName,
-    artwork_url: artwork,
-    source_url: window.location.href,
-    stores: storeLinks,
-    tracks,
-    raw: {},
-  };
-}
-
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.type === "AV_GET_VAULT_TOKEN") {
     sendResponse(getVaultToken());
     return;
   }
 
-  if (message?.type === "AV_GET_VAULT_IMPORT_CONTEXT") {
-    try {
-      sendResponse(readVaultImportContext());
-    } catch (error) {
-      sendResponse({
-        ok: false,
-        message: error instanceof Error ? error.message : "Unable to read Artist Vault page.",
-      });
-    }
-    return true;
-  }
-
   if (message?.type === "AV_DISCOVER_RELEASES") {
-    try {
-      sendResponse({ releaseLinks: discoverReleaseLinks() });
-    } catch (error) {
-      sendResponse({
-        ok: false,
-        message: error instanceof Error ? error.message : "Unable to discover DistroKid releases.",
-      });
-    }
-    return true;
+    sendResponse({
+      releaseLinks: discoverReleaseLinks()
+    });
+    return;
   }
 
   if (message?.type === "AV_SCRAPE_RELEASE_PAGE") {
@@ -189,16 +16,395 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       sendResponse(scrapeReleasePage());
     } catch (error) {
       sendResponse({
-        ok: false,
-        message: error instanceof Error ? error.message : "Unable to scrape DistroKid release page.",
+        error: error instanceof Error ? error.message : "Unknown scrape error."
       });
     }
-    return true;
   }
-
-  return undefined;
 });
 
+function discoverReleaseLinks() {
+  const links = new Set();
+
+  const current = normalizeDistroKidAlbumUrl(window.location.href);
+  if (current) {
+    links.add(current);
+  }
+
+  for (const anchor of Array.from(document.querySelectorAll("a[href*='albumuuid=']"))) {
+    const href = anchor.getAttribute("href") || "";
+
+    try {
+      const absolute = new URL(href, window.location.origin).toString();
+      const normalized = normalizeDistroKidAlbumUrl(absolute);
+
+      if (normalized) {
+        links.add(normalized);
+      }
+    } catch (_error) {
+      // Ignore malformed links.
+    }
+  }
+
+  return [...links];
+}
+
+function normalizeDistroKidAlbumUrl(url) {
+  try {
+    const parsed = new URL(url);
+    const albumuuid = parsed.searchParams.get("albumuuid") || parsed.searchParams.get("id");
+
+    if (!albumuuid) return null;
+
+    return `https://distrokid.com/dashboard/album/?albumuuid=${encodeURIComponent(albumuuid)}`;
+  } catch (_error) {
+    return null;
+  }
+}
+
+function scrapeReleasePage() {
+  const sourceUrl = window.location.href;
+  const sourceReleaseId = extractAlbumUuid(sourceUrl);
+
+  if (!sourceReleaseId) {
+    throw new Error("Could not detect albumuuid on this page.");
+  }
+
+  const title =
+    textOf(".album-title span") ||
+    metaContent("property", "og:title")?.replace(/\s+by\s+.+$/i, "") ||
+    document.title.replace(/\s*-\s*DistroKid\s*$/i, "").replace(/^.+?\s+-\s+/, "");
+
+  const artistName =
+    textOf(".band-name span") ||
+    parseArtistFromOgDescription() ||
+    null;
+
+  const releaseDate =
+    normalizeDate(findReleaseInfoValue("Release date")) ||
+    normalizeDateFromOgDescription();
+
+  const upc =
+    textOf("#js-album-upc") ||
+    findReleaseInfoValue("DistroKid UPC") ||
+    null;
+
+  const genre =
+    document.querySelector("#page-data")?.getAttribute("data-album-genre-primary") ||
+    null;
+
+  const tracks = scrapeTracks();
+
+  return {
+    source_release_id: sourceReleaseId,
+    title: clean(title) || `Release ${sourceReleaseId}`,
+    artist_name: clean(artistName),
+    release_date: releaseDate,
+    upc: clean(upc),
+    label_name: null,
+    artwork_url: scrapeArtworkUrl(),
+    source_url: sourceUrl,
+    genre: clean(genre),
+    stores: scrapeStoreLinks(),
+    tracks,
+    raw: {
+      scraped_at: new Date().toISOString(),
+      page_title: document.title,
+      scraper: "distrokid-dashboard-dom-v2"
+    }
+  };
+}
+
+function scrapeTracks() {
+  const rows = Array.from(document.querySelectorAll(".track-row"));
+  const tracks = [];
+
+  for (const row of rows) {
+    const trackNumber = normalizeInteger(textOfFrom(row, ".track-number, .track-cell:first-child"));
+    const title =
+      textOfFrom(row, ".track-name") ||
+      guessTitleFromTrackRow(row, trackNumber) ||
+      `Track ${tracks.length + 1}`;
+
+    const isrc =
+      textOfFrom(row, ".isrc-value") ||
+      findIsrc(row.innerText);
+
+    tracks.push({
+      source_track_id: String(trackNumber || tracks.length + 1),
+      track_number: trackNumber || tracks.length + 1,
+      title: clean(title) || `Track ${tracks.length + 1}`,
+      isrc: clean(isrc),
+      duration_text: null,
+      explicit: inferExplicit(row.innerText)
+    });
+  }
+
+  if (tracks.length) {
+    return dedupeTracks(tracks);
+  }
+
+  return scrapeTracksFromTextFallback();
+}
+
+function scrapeTracksFromTextFallback() {
+  const text = getDocumentText();
+  const lines = text.split("\n").map(clean).filter(Boolean);
+  const tracks = [];
+
+  for (const line of lines) {
+    const isrc = findIsrc(line);
+    if (!isrc) continue;
+
+    const withoutIsrc = clean(line.replace(isrc, ""));
+    const numberMatch = withoutIsrc?.match(/^(\d{1,2})\s+(.+)$/);
+    const trackNumber = numberMatch ? Number.parseInt(numberMatch[1], 10) : tracks.length + 1;
+
+    let title = numberMatch ? numberMatch[2] : withoutIsrc;
+    title = title
+      ?.replace(/\bPlain lyrics\b.*$/i, "")
+      ?.replace(/\bSynced lyrics\b.*$/i, "")
+      ?.replace(/\bCredits\b.*$/i, "")
+      ?.replace(/\bVizy\b.*$/i, "")
+      ?.replace(/\bAudio Swap\b.*$/i, "")
+      ?.replace(/\bDownload\b.*$/i, "")
+      ?.replace(/\bISRC\b.*$/i, "");
+
+    tracks.push({
+      source_track_id: String(trackNumber),
+      track_number: trackNumber,
+      title: clean(title) || `Track ${trackNumber}`,
+      isrc,
+      duration_text: null,
+      explicit: inferExplicit(line)
+    });
+  }
+
+  return dedupeTracks(tracks);
+}
+
+function guessTitleFromTrackRow(row, trackNumber) {
+  const cells = Array.from(row.querySelectorAll(".track-cell"))
+    .map((cell) => clean(cell.innerText))
+    .filter(Boolean);
+
+  for (const cell of cells) {
+    if (String(cell) === String(trackNumber)) continue;
+    if (/^(Plain lyrics|Synced lyrics|Credits|Vizy|Audio Swap|Download|ISRC)$/i.test(cell)) continue;
+    if (findIsrc(cell)) continue;
+    return cell;
+  }
+
+  return null;
+}
+
+function dedupeTracks(tracks) {
+  const unique = new Map();
+
+  for (const track of tracks) {
+    const key = track.isrc || `${track.track_number}:${track.title}`;
+
+    if (!unique.has(key)) {
+      unique.set(key, track);
+    }
+  }
+
+  return [...unique.values()];
+}
+
+function findReleaseInfoValue(label) {
+  const wanted = label.toLowerCase().replace(/:$/, "");
+
+  for (const item of Array.from(document.querySelectorAll(".release-info div"))) {
+    const spans = Array.from(item.querySelectorAll("span")).map((span) => clean(span.innerText));
+
+    if (spans.length >= 2) {
+      const foundLabel = String(spans[0] || "").toLowerCase().replace(/:$/, "");
+
+      if (foundLabel === wanted) {
+        return spans.slice(1).join(" ").trim();
+      }
+    }
+
+    const text = clean(item.innerText);
+    const regex = new RegExp(`${escapeRegExp(label)}\\s*:?\\s*(.+)$`, "i");
+    const match = text?.match(regex);
+
+    if (match?.[1]) {
+      return match[1].trim();
+    }
+  }
+
+  return null;
+}
+
+function scrapeStoreLinks() {
+  const stores = [];
+  const seen = new Set();
+
+  const allowed = [
+    { name: "Spotify", match: /spotify/i },
+    { name: "Apple Music", match: /apple\s*music|itunes/i },
+    { name: "YouTube Music", match: /youtube\s*music|youtube/i },
+    { name: "Amazon Music", match: /amazon/i },
+    { name: "TikTok", match: /tiktok|bytedance/i },
+    { name: "Pandora", match: /pandora/i },
+    { name: "Deezer", match: /deezer/i },
+    { name: "Tidal", match: /tidal/i },
+    { name: "iHeartRadio", match: /iheart/i }
+  ];
+
+  for (const img of Array.from(document.querySelectorAll(".store-icons img[title], img.littleStoreIcons[title]"))) {
+    const title = clean(img.getAttribute("title"));
+    if (!title) continue;
+
+    const match = allowed.find((item) => item.match.test(title));
+    if (!match) continue;
+
+    if (!seen.has(match.name)) {
+      seen.add(match.name);
+      stores.push({
+        name: match.name,
+        url: null,
+        status: title
+      });
+    }
+  }
+
+  for (const anchor of Array.from(document.querySelectorAll("a[href]"))) {
+    const href = anchor.href || "";
+    const match = allowed.find((item) => item.match.test(href));
+
+    if (!match) continue;
+
+    const key = `${match.name}:${href}`;
+    if (seen.has(key)) continue;
+
+    seen.add(key);
+    stores.push({
+      name: match.name,
+      url: href,
+      status: "link"
+    });
+  }
+
+  return stores;
+}
+
+function scrapeArtworkUrl() {
+  const ogImage = metaContent("property", "og:image");
+  if (ogImage) return absolutizeUrl(ogImage);
+
+  const albumImage = document.querySelector(".album-image")?.getAttribute("src");
+  if (albumImage) return absolutizeUrl(albumImage);
+
+  const images = Array.from(document.querySelectorAll("img[src]"))
+    .map((img) => ({
+      src: img.getAttribute("src"),
+      width: img.naturalWidth || img.width || 0,
+      height: img.naturalHeight || img.height || 0,
+      alt: clean(img.getAttribute("alt")) || ""
+    }))
+    .filter((img) => img.src)
+    .sort((a, b) => (b.width * b.height) - (a.width * a.height));
+
+  return images.length ? absolutizeUrl(images[0].src) : null;
+}
+
+function parseArtistFromOgDescription() {
+  const description = metaContent("property", "og:description");
+  if (!description) return null;
+
+  const match = description.match(/\bby\s+(.+?)\.\s+Released/i);
+  return match?.[1] || null;
+}
+
+function normalizeDateFromOgDescription() {
+  const description = metaContent("property", "og:description");
+  if (!description) return null;
+
+  const match = description.match(/Released\s+(.+?)\s+\(/i);
+  return normalizeDate(match?.[1]);
+}
+
+function metaContent(attr, value) {
+  return clean(document.querySelector(`meta[${attr}="${value}"]`)?.getAttribute("content"));
+}
+
+function textOf(selector) {
+  return clean(document.querySelector(selector)?.textContent);
+}
+
+function textOfFrom(root, selector) {
+  return clean(root.querySelector(selector)?.textContent);
+}
+
+function extractAlbumUuid(url) {
+  try {
+    const parsed = new URL(url);
+    return parsed.searchParams.get("albumuuid") || parsed.searchParams.get("id");
+  } catch (_error) {
+    return null;
+  }
+}
+
+function findIsrc(value) {
+  const match = String(value || "").match(/\b([A-Z]{2}[A-Z0-9]{3}\d{7})\b/);
+  return match?.[1] || null;
+}
+
+function inferExplicit(value) {
+  if (/\bexplicit\b/i.test(String(value || ""))) return true;
+  if (/\bclean\b/i.test(String(value || ""))) return false;
+  return null;
+}
+
+function normalizeInteger(value) {
+  if (typeof value === "number" && Number.isFinite(value)) return Math.trunc(value);
+
+  const match = String(value || "").match(/\d+/);
+  if (!match) return null;
+
+  const parsed = Number.parseInt(match[0], 10);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function normalizeDate(value) {
+  if (!value) return null;
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  return parsed.toISOString().slice(0, 10);
+}
+
+function absolutizeUrl(value) {
+  if (!value) return null;
+
+  try {
+    return new URL(value, window.location.href).toString();
+  } catch (_error) {
+    return value;
+  }
+}
+
+function getDocumentText() {
+  return (document.body?.innerText || "")
+    .replace(/\u00a0/g, " ")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function clean(value) {
+  if (value === null || value === undefined) return null;
+
+  const text = String(value).replace(/\s+/g, " ").trim();
+  return text || null;
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 function getVaultToken() {
   const storageKeys = [
