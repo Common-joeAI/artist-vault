@@ -94,9 +94,19 @@ function scrapeReleasePage() {
 
   const tracks = scrapeTracks();
 
+  const cleanedTitle = clean(title);
+
+  if (!cleanedTitle || cleanedTitle === "Mobile App") {
+    throw new Error("DistroKid album title was not found. Wait for the album page to fully load, then try again.");
+  }
+
+  if (!tracks.length) {
+    throw new Error("No track rows were found on this DistroKid album page. Open the full desktop album dashboard page, wait for tracks to appear, then try again.");
+  }
+
   return {
     source_release_id: sourceReleaseId,
-    title: clean(title) || `Release ${sourceReleaseId}`,
+    title: cleanedTitle || `Release ${sourceReleaseId}`,
     artist_name: clean(artistName),
     release_date: releaseDate,
     upc: clean(upc),
@@ -109,7 +119,13 @@ function scrapeReleasePage() {
     raw: {
       scraped_at: new Date().toISOString(),
       page_title: document.title,
-      scraper: "distrokid-dashboard-dom-v2"
+      scraper: "distrokid-dashboard-dom-v3",
+      debug: {
+        album_title_count: document.querySelectorAll(".album-title span").length,
+        band_name_count: document.querySelectorAll(".band-name span").length,
+        track_row_count: document.querySelectorAll(".track-row").length,
+        body_text_sample: getDocumentText().slice(0, 1200)
+      }
     }
   };
 }
