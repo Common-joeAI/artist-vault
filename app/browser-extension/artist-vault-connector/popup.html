@@ -4,114 +4,88 @@
     <meta charset="utf-8" />
     <title>Artist Vault Connector</title>
     <style>
-      :root {
-        color-scheme: dark;
-      }
       body {
-        margin: 0;
-        width: 360px;
-        font-family: Arial, Helvetica, sans-serif;
-        background: #070711;
+        font-family: Arial, sans-serif;
+        background: #0a0a12;
         color: #ffffff;
-      }
-      .wrap {
-        padding: 16px;
-        display: grid;
-        gap: 12px;
-      }
-      h1 {
         margin: 0;
-        font-size: 22px;
+        padding: 14px;
+        min-width: 380px;
       }
+      h3 { margin: 0 0 8px; }
       p {
-        margin: 0;
-        color: rgba(255,255,255,0.86);
+        color: rgba(255,255,255,0.7);
+        font-size: 13px;
         line-height: 1.45;
       }
       label {
-        display: grid;
-        gap: 6px;
-        font-size: 13px;
-        color: rgba(255,255,255,0.88);
+        display: block;
+        font-size: 12px;
+        margin: 12px 0 6px;
+        color: #c9bbff;
       }
       input, textarea {
         width: 100%;
         box-sizing: border-box;
-        border-radius: 12px;
-        border: 1px solid rgba(255,255,255,0.14);
-        background: #111126;
-        color: #ffffff;
-        padding: 12px;
-        font-size: 14px;
-      }
-      textarea {
-        min-height: 88px;
-        resize: vertical;
-      }
-      .row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
+        border: 1px solid rgba(255,255,255,0.15);
+        background: #141424;
+        color: white;
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-size: 13px;
       }
       button {
-        appearance: none;
-        border: 1px solid rgba(255,255,255,0.14);
+        width: 100%;
+        margin-top: 12px;
+        border: 0;
         border-radius: 12px;
-        padding: 12px;
-        font-size: 14px;
+        padding: 11px 14px;
         font-weight: 700;
+        background: #6d3df5;
+        color: white;
         cursor: pointer;
-        background: #181828;
-        color: #ffffff;
       }
-      button.primary {
-        background: #7c3aed;
-        border-color: #7c3aed;
-      }
+      button.secondary { background: rgba(255,255,255,0.08); }
+      button.success { background: #16864c; }
       .status {
+        margin-top: 12px;
+        padding: 10px 12px;
         border-radius: 12px;
-        padding: 12px;
-        background: #111126;
-        border: 1px solid rgba(255,255,255,0.08);
-        font-size: 14px;
-        line-height: 1.4;
-      }
-      .hint {
+        background: rgba(255,255,255,0.05);
         font-size: 12px;
-        color: rgba(255,255,255,0.72);
+        line-height: 1.5;
+        white-space: pre-wrap;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+      }
+      .row button {
+        width: auto;
+        flex: 1;
       }
     </style>
   </head>
   <body>
-    <div class="wrap">
-      <h1>Artist Vault Connector</h1>
-      <p>
-        Pull the token from an open Artist Vault tab, then start the DistroKid import from a page that lists releases.
-      </p>
+    <h3>Artist Vault Connector</h3>
+    <p>Open Artist Vault, generate an import token, then click “Pull token from Vault.” You can still paste manually if needed.</p>
 
-      <label>
-        Artist Vault base URL
-        <input id="vaultOrigin" type="text" placeholder="https://www.aiartistvault.com" />
-      </label>
+    <label for="vaultBaseUrl">Artist Vault base URL</label>
+    <input id="vaultBaseUrl" placeholder="https://aiartistvault.com" />
 
-      <label>
-        Import token
-        <textarea id="importToken" placeholder="Token will appear here"></textarea>
-      </label>
+    <label for="sessionToken">Import token</label>
+    <textarea id="sessionToken" rows="4" placeholder="Paste import token here or pull it from Vault"></textarea>
 
-      <div class="row">
-        <button id="pullFromVault" type="button">Use token from Vault</button>
-        <button id="openVault" type="button">Open Vault</button>
-      </div>
+    <button id="pullToken" class="success" type="button">Pull token from Vault</button>
 
-      <div class="row">
-        <button id="saveConfig" type="button">Save</button>
-        <button id="startImport" class="primary" type="button">Start import</button>
-      </div>
-
-      <div id="status" class="status">Open Artist Vault in another tab, click Start DistroKid import there, then use Use token from Vault here.</div>
-      <div class="hint">Keep the Artist Vault importer page open while you pull the token.</div>
+    <div class="row">
+      <button id="saveSettings" class="secondary" type="button">Save</button>
+      <button id="openVault" class="secondary" type="button">Open Vault</button>
     </div>
+
+    <button id="startImport" type="button">Start import</button>
+
+    <div class="status" id="status">Ready.</div>
 
     <script src="popup.js"></script>
   </body>

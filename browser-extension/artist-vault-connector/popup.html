@@ -10,11 +10,9 @@
         color: #ffffff;
         margin: 0;
         padding: 14px;
-        min-width: 360px;
+        min-width: 380px;
       }
-      h3 {
-        margin: 0 0 8px;
-      }
+      h3 { margin: 0 0 8px; }
       p {
         color: rgba(255,255,255,0.7);
         font-size: 13px;
@@ -47,9 +45,8 @@
         color: white;
         cursor: pointer;
       }
-      button.secondary {
-        background: rgba(255,255,255,0.08);
-      }
+      button.secondary { background: rgba(255,255,255,0.08); }
+      button.success { background: #16864c; }
       .status {
         margin-top: 12px;
         padding: 10px 12px;
@@ -71,13 +68,15 @@
   </head>
   <body>
     <h3>Artist Vault Connector</h3>
-    <p>Paste the import token from Artist Vault, confirm the vault URL, then start the DistroKid import from a page that lists releases.</p>
+    <p>Open Artist Vault, generate an import token, then click “Pull token from Vault.” You can still paste manually if needed.</p>
 
     <label for="vaultBaseUrl">Artist Vault base URL</label>
     <input id="vaultBaseUrl" placeholder="https://aiartistvault.com" />
 
     <label for="sessionToken">Import token</label>
-    <textarea id="sessionToken" rows="4" placeholder="Paste import token here"></textarea>
+    <textarea id="sessionToken" rows="4" placeholder="Paste import token here or pull it from Vault"></textarea>
+
+    <button id="pullToken" class="success" type="button">Pull token from Vault</button>
 
     <div class="row">
       <button id="saveSettings" class="secondary" type="button">Save</button>

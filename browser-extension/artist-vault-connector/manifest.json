@@ -28,7 +28,12 @@
     {
       "matches": [
         "https://distrokid.com/*",
-        "https://*.distrokid.com/*"
+        "https://*.distrokid.com/*",
+        "https://aiartistvault.com/*",
+        "https://*.aiartistvault.com/*",
+        "https://*.darkkeangelzz.live/*",
+        "http://localhost/*",
+        "http://127.0.0.1/*"
       ],
       "js": [
         "content.js"

@@ -1,164 +1,156 @@
-const DEFAULT_VAULT_ORIGIN = "https://www.aiartistvault.com";
-const IMPORTER_PATH = "/vault/pro/releases/import/distrokid";
-
-const vaultOriginInput = document.getElementById("vaultOrigin");
-const importTokenInput = document.getElementById("importToken");
-const pullFromVaultButton = document.getElementById("pullFromVault");
+const vaultBaseUrlInput = document.getElementById("vaultBaseUrl");
+const sessionTokenInput = document.getElementById("sessionToken");
+const statusEl = document.getElementById("status");
+const saveSettingsButton = document.getElementById("saveSettings");
 const openVaultButton = document.getElementById("openVault");
-const saveConfigButton = document.getElementById("saveConfig");
+const pullTokenButton = document.getElementById("pullToken");
 const startImportButton = document.getElementById("startImport");
-const statusBox = document.getElementById("status");
 
-function setStatus(message) {
-  statusBox.textContent = message;
+const DEFAULT_VAULT_URL = "https://aiartistvault.com";
+
+async function loadSettings() {
+  const data = await chrome.storage.local.get(["avVaultBaseUrl", "avSessionToken", "avImportStatus"]);
+  vaultBaseUrlInput.value = data.avVaultBaseUrl || DEFAULT_VAULT_URL;
+  sessionTokenInput.value = data.avSessionToken || "";
+  renderStatus(data.avImportStatus || "Ready.");
+
+  if (!data.avSessionToken) {
+    pullTokenFromVault({ silent: true }).catch(() => undefined);
+  }
 }
 
-function isVaultImporterUrl(url) {
-  return /^https:\/\/(www\.)?aiartistvault\.com\/vault\/pro\/releases\/import\/distrokid/i.test(url || "");
+async function saveSettings() {
+  const baseUrl = normalizeBaseUrl(vaultBaseUrlInput.value) || DEFAULT_VAULT_URL;
+  const sessionToken = sessionTokenInput.value.trim();
+
+  await chrome.storage.local.set({
+    avVaultBaseUrl: baseUrl,
+    avSessionToken: sessionToken,
+  });
+
+  vaultBaseUrlInput.value = baseUrl;
+  renderStatus("Settings saved.");
 }
 
-async function getStoredConfig() {
-  return chrome.storage.local.get(["vaultOrigin", "importToken"]);
-}
+async function pullTokenFromVault(options = {}) {
+  const silent = Boolean(options.silent);
+  const baseUrl = normalizeBaseUrl(vaultBaseUrlInput.value) || DEFAULT_VAULT_URL;
 
-async function saveStoredConfig(vaultOrigin, importToken) {
-  await chrome.storage.local.set({ vaultOrigin, importToken });
-}
+  if (!silent) renderStatus("Looking for an open Artist Vault tab...");
 
-async function findOpenVaultTab() {
-  const tabs = await chrome.tabs.query({});
-  return tabs.find((tab) => isVaultImporterUrl(tab.url)) || null;
-}
-
-async function pullTokenFromVault(showSuccess = true) {
-  const vaultTab = await findOpenVaultTab();
-
-  if (!vaultTab || !vaultTab.id) {
-    setStatus("Open the Artist Vault importer page first, then click Start DistroKid import there.");
-    return false;
+  const tabs = await findVaultTabs(baseUrl);
+  if (!tabs.length) {
+    if (!silent) renderStatus("No open Artist Vault tab found. Click Open Vault, generate a token, then try again.");
+    return null;
   }
 
-  let response;
-  try {
-    response = await chrome.tabs.sendMessage(vaultTab.id, {
-      type: "AV_GET_VAULT_IMPORT_CONTEXT",
-    });
-  } catch (_error) {
-    setStatus("Could not read the open Vault tab. Reload the Vault page and try again.");
-    return false;
+  for (const tab of tabs) {
+    if (!tab.id) continue;
+
+    try {
+      const response = await chrome.tabs.sendMessage(tab.id, { type: "AV_GET_VAULT_TOKEN" });
+
+      if (response?.sessionToken) {
+        sessionTokenInput.value = response.sessionToken;
+        vaultBaseUrlInput.value = baseUrl;
+
+        await chrome.storage.local.set({
+          avVaultBaseUrl: baseUrl,
+          avSessionToken: response.sessionToken,
+        });
+
+        renderStatus(`Token pulled from Vault.\nExpires: ${response.expiresAt || "unknown"}`);
+        return response.sessionToken;
+      }
+    } catch (_error) {
+      // Content script may not be available on older loaded tabs.
+    }
   }
 
-  if (!response?.ok) {
-    setStatus(response?.message || "Could not read the Vault page.");
-    return false;
+  if (!silent) {
+    renderStatus("Could not find an active token on the open Vault tab. Generate a token on the Vault import page, then try again.");
   }
 
-  if (!response.token) {
-    setStatus("No token found on the Vault page. In Artist Vault, click Start DistroKid import first.");
-    return false;
-  }
-
-  const vaultOrigin = response.vaultOrigin || new URL(vaultTab.url).origin;
-  vaultOriginInput.value = vaultOrigin;
-  importTokenInput.value = response.token;
-
-  await saveStoredConfig(vaultOrigin, response.token);
-
-  if (showSuccess) {
-    setStatus("Token pulled from the open Vault tab.");
-  }
-
-  return true;
+  return null;
 }
 
-async function saveConfig() {
-  const vaultOrigin = (vaultOriginInput.value || DEFAULT_VAULT_ORIGIN).trim();
-  const importToken = (importTokenInput.value || "").trim();
-
-  await saveStoredConfig(vaultOrigin, importToken);
-  setStatus("Saved.");
+function normalizeBaseUrl(value) {
+  return String(value || "").trim().replace(/\/$/, "");
 }
 
-async function openVault() {
-  const vaultOrigin = (vaultOriginInput.value || DEFAULT_VAULT_ORIGIN).trim();
-  await chrome.tabs.create({ url: `${vaultOrigin}${IMPORTER_PATH}` });
+async function findVaultTabs(baseUrl) {
+  const parsed = new URL(baseUrl);
+  const originPattern = `${parsed.protocol}//${parsed.host}/*`;
+
+  const tabs = await chrome.tabs.query({ url: originPattern });
+  return tabs.filter((tab) => tab.url && tab.url.includes(parsed.host));
 }
 
-async function startImport() {
-  let vaultOrigin = (vaultOriginInput.value || DEFAULT_VAULT_ORIGIN).trim();
-  let importToken = (importTokenInput.value || "").trim();
+function renderStatus(message) {
+  statusEl.textContent = message;
+}
 
-  // Manual mode: if both fields are filled, do NOT depend on Vault tab lookup.
-  if (!vaultOrigin) {
-    vaultOrigin = DEFAULT_VAULT_ORIGIN;
-    vaultOriginInput.value = vaultOrigin;
-  }
+saveSettingsButton.addEventListener("click", saveSettings);
+pullTokenButton.addEventListener("click", () => pullTokenFromVault());
 
-  if (!importToken) {
-    const pulled = await pullTokenFromVault(false);
-    if (!pulled) return;
+openVaultButton.addEventListener("click", async () => {
+  const baseUrl = normalizeBaseUrl(vaultBaseUrlInput.value) || DEFAULT_VAULT_URL;
+  await chrome.tabs.create({ url: `${baseUrl}/vault/import/distrokid` });
+});
 
-    vaultOrigin = (vaultOriginInput.value || DEFAULT_VAULT_ORIGIN).trim();
-    importToken = (importTokenInput.value || "").trim();
-  }
+startImportButton.addEventListener("click", async () => {
+  const baseUrl = normalizeBaseUrl(vaultBaseUrlInput.value);
+  let sessionToken = sessionTokenInput.value.trim();
 
-  if (!vaultOrigin) {
-    setStatus("Missing vault base URL.");
+  if (!baseUrl) {
+    renderStatus("Missing Artist Vault base URL.");
     return;
   }
 
-  if (!importToken) {
-    setStatus("Missing import token.");
+  if (!sessionToken) {
+    sessionToken = await pullTokenFromVault({ silent: false }) || "";
+  }
+
+  if (!sessionToken) {
+    renderStatus("Missing import token. Generate one in Artist Vault, then pull it into the connector.");
     return;
   }
 
-  await saveStoredConfig(vaultOrigin, importToken);
+  await chrome.storage.local.set({
+    avVaultBaseUrl: baseUrl,
+    avSessionToken: sessionToken,
+    avImportStatus: "Starting import..."
+  });
 
-  const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
-
-  if (!activeTab?.url || !/https:\/\/(.+\.)?distrokid\.com/i.test(activeTab.url)) {
-    setStatus("Open a DistroKid releases page before starting the import.");
-    return;
-  }
-
-  try {
-    const response = await chrome.runtime.sendMessage({
+  chrome.runtime.sendMessage(
+    {
       type: "AV_START_IMPORT",
-      sessionToken: importToken,
-      importToken,
-      token: importToken,
-      vaultBaseUrl: vaultOrigin,
-      vaultOrigin,
-      baseUrl: vaultOrigin,
-      tabId: activeTab.id || null,
-      pageUrl: activeTab.url,
-    });
+      vaultBaseUrl: baseUrl,
+      sessionToken
+    },
+    (response) => {
+      if (chrome.runtime.lastError) {
+        renderStatus(chrome.runtime.lastError.message);
+        return;
+      }
 
-    setStatus(response?.message || (response?.ok ? "Import started." : "Import failed."));
-  } catch (error) {
-    setStatus(error instanceof Error ? error.message : "Import failed.");
+      if (!response) {
+        renderStatus("No response received from background worker.");
+        return;
+      }
+
+      renderStatus(response.message || "Import started.");
+    }
+  );
+});
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== "local") return;
+  if (changes.avImportStatus) {
+    renderStatus(changes.avImportStatus.newValue || "Ready.");
   }
-}
-
-document.addEventListener("DOMContentLoaded", async () => {
-  const stored = await getStoredConfig();
-  vaultOriginInput.value = stored.vaultOrigin || DEFAULT_VAULT_ORIGIN;
-  importTokenInput.value = stored.importToken || "";
-  setStatus("Ready.");
 });
 
-pullFromVaultButton.addEventListener("click", () => {
-  void pullTokenFromVault(true);
-});
-
-openVaultButton.addEventListener("click", () => {
-  void openVault();
-});
-
-saveConfigButton.addEventListener("click", () => {
-  void saveConfig();
-});
-
-startImportButton.addEventListener("click", () => {
-  void startImport();
+loadSettings().catch((error) => {
+  renderStatus(error instanceof Error ? error.message : "Unable to load connector settings.");
 });

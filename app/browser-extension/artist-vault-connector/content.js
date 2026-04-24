@@ -155,6 +155,11 @@ function scrapeReleasePage() {
 }
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message?.type === "AV_GET_VAULT_TOKEN") {
+    sendResponse(getVaultToken());
+    return;
+  }
+
   if (message?.type === "AV_GET_VAULT_IMPORT_CONTEXT") {
     try {
       sendResponse(readVaultImportContext());
@@ -193,3 +198,53 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
   return undefined;
 });
+
+
+function getVaultToken() {
+  const storageKeys = [
+    "artistVaultDistroKidImportSession",
+    "avDistroKidImportSession",
+    "distrokidImportSession"
+  ];
+
+  for (const key of storageKeys) {
+    try {
+      const raw = window.localStorage.getItem(key);
+      if (!raw) continue;
+
+      const parsed = JSON.parse(raw);
+      const sessionToken = parsed.session_token || parsed.sessionToken || parsed.token;
+      const expiresAt = parsed.expires_at || parsed.expiresAt || null;
+
+      if (sessionToken) {
+        return {
+          ok: true,
+          sessionToken,
+          expiresAt,
+          source: `localStorage:${key}`
+        };
+      }
+    } catch (_error) {
+      // Continue checking other keys.
+    }
+  }
+
+  const tokenEl = document.querySelector("[data-artist-vault-distrokid-token]");
+  const sessionToken = tokenEl?.getAttribute("data-artist-vault-distrokid-token") || tokenEl?.textContent?.trim();
+
+  if (sessionToken) {
+    return {
+      ok: true,
+      sessionToken,
+      expiresAt: null,
+      source: "dom"
+    };
+  }
+
+  return {
+    ok: false,
+    sessionToken: null,
+    expiresAt: null,
+    source: null
+  };
+}

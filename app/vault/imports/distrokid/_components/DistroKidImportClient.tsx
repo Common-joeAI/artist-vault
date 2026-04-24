@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 
+const DISTROKID_SESSION_STORAGE_KEY = "artistVaultDistroKidImportSession";
+
 type SessionResponse = {
   session_token: string;
   expires_at: string;
@@ -48,6 +50,18 @@ export default function DistroKidImportClient() {
       setSession(data);
       setStatus(null);
       setCopied(false);
+
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(
+          DISTROKID_SESSION_STORAGE_KEY,
+          JSON.stringify({
+            session_token: data.session_token,
+            expires_at: data.expires_at,
+            status_url: data.status_url,
+            saved_at: new Date().toISOString(),
+          }),
+        );
+      }
     } catch (error) {
       alert(error instanceof Error ? error.message : "Unable to create import token.");
     } finally {
@@ -128,7 +142,7 @@ export default function DistroKidImportClient() {
             {session ? (
               <div className="mt-5 rounded-2xl border border-emerald-500/20 bg-emerald-950/20 p-4">
                 <div className="text-xs uppercase tracking-[0.18em] text-emerald-300">Active token</div>
-                <div className="mt-2 break-all rounded-lg bg-black/40 p-3 font-mono text-sm">
+                <div data-artist-vault-distrokid-token={session.session_token} className="mt-2 break-all rounded-lg bg-black/40 p-3 font-mono text-sm">
                   {session.session_token}
                 </div>
 
@@ -166,6 +180,17 @@ export default function DistroKidImportClient() {
               <li>4. Open DistroKid and sign in.</li>
               <li>5. On a release listing page, open the extension and start the import.</li>
             </ol>
+
+            <a
+              href="/api/import/distrokid/connector"
+              className="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-500"
+            >
+              Download connector ZIP
+            </a>
+
+            <p className="mt-3 text-xs text-white/55">
+              Download, unzip, then use Chrome or Edge &quot;Load unpacked&quot; on the unzipped connector folder.
+            </p>
 
             <div className="mt-5 rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/65">
               <div className="font-semibold text-white">Default vault origin</div>
