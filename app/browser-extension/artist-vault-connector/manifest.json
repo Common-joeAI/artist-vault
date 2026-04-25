@@ -1,45 +1,40 @@
 {
   "manifest_version": 3,
   "name": "Artist Vault Connector",
-  "version": "0.1.1",
-  "description": "Import release metadata from DistroKid into Artist Vault.",
-  "permissions": [
-    "activeTab",
-    "storage",
-    "tabs"
-  ],
+  "version": "2.0.0",
+  "description": "Import your music catalog from DistroKid and SoundOn into Artist Vault.",
+  "permissions": ["activeTab", "scripting", "storage"],
   "host_permissions": [
-    "http://127.0.0.1/*",
-    "http://localhost/*",
-    "https://*.aiartistvault.com/*",
-    "https://*.darkkeangelzz.live/*",
-    "https://*.distrokid.com/*",
-    "https://aiartistvault.com/*",
     "https://distrokid.com/*",
-    "https://www.aiartistvault.com/*"
+    "https://sound.on.fm/*",
+    "https://soundon.fm/*",
+    "https://aiartistvault.com/*"
   ],
   "background": {
     "service_worker": "background.js"
-  },
-  "action": {
-    "default_title": "Artist Vault Connector",
-    "default_popup": "popup.html"
   },
   "content_scripts": [
     {
       "matches": [
         "https://distrokid.com/*",
-        "https://*.distrokid.com/*",
-        "https://aiartistvault.com/*",
-        "https://*.aiartistvault.com/*",
-        "https://*.darkkeangelzz.live/*",
-        "http://localhost/*",
-        "http://127.0.0.1/*"
+        "https://sound.on.fm/*",
+        "https://soundon.fm/*"
       ],
-      "js": [
-        "content.js"
-      ],
+      "js": ["content.js"],
       "run_at": "document_idle"
     }
-  ]
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
 }
