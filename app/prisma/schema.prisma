@@ -220,3 +220,27 @@ model MetadataEnhancementJob {
   @@index([trackId, createdAt])
   @@index([status, createdAt])
 }
+
+model OnboardingDiscoveryJob {
+  id                    String   @id @default(cuid())
+  ownerUserId           String?
+  artistProfileId       String?
+
+  status                MetadataEnhancementStatus @default(queued)
+  startedAt             DateTime?
+  completedAt           DateTime?
+  failedAt              DateTime?
+
+  requestedUrlsJson     Json?
+  snapshotJson          Json?
+  resultJson            Json?
+  errorJson             Json?
+  aiModel               String?
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([ownerUserId, createdAt])
+  @@index([artistProfileId, createdAt])
+  @@index([status, createdAt])
+}
