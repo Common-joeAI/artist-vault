@@ -1,92 +1,123 @@
-<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Artist Vault Connector</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        background: #0a0a12;
-        color: #ffffff;
-        margin: 0;
-        padding: 14px;
-        min-width: 380px;
-      }
-      h3 { margin: 0 0 8px; }
-      p {
-        color: rgba(255,255,255,0.7);
-        font-size: 13px;
-        line-height: 1.45;
-      }
-      label {
-        display: block;
-        font-size: 12px;
-        margin: 12px 0 6px;
-        color: #c9bbff;
-      }
-      input, textarea {
-        width: 100%;
-        box-sizing: border-box;
-        border: 1px solid rgba(255,255,255,0.15);
-        background: #141424;
-        color: white;
-        border-radius: 10px;
-        padding: 10px 12px;
-        font-size: 13px;
-      }
-      button {
-        width: 100%;
-        margin-top: 12px;
-        border: 0;
-        border-radius: 12px;
-        padding: 11px 14px;
-        font-weight: 700;
-        background: #6d3df5;
-        color: white;
-        cursor: pointer;
-      }
-      button.secondary { background: rgba(255,255,255,0.08); }
-      button.success { background: #16864c; }
-      .status {
-        margin-top: 12px;
-        padding: 10px 12px;
-        border-radius: 12px;
-        background: rgba(255,255,255,0.05);
-        font-size: 12px;
-        line-height: 1.5;
-        white-space: pre-wrap;
-      }
-      .row {
-        display: flex;
-        gap: 8px;
-      }
-      .row button {
-        width: auto;
-        flex: 1;
-      }
-    </style>
-  </head>
-  <body>
-    <h3>Artist Vault Connector</h3>
-    <p>Open Artist Vault, generate an import token, then click “Pull token from Vault.” You can still paste manually if needed.</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Artist Vault Connector</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 300px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f0f1a;
+      color: #e2e8f0;
+    }
 
-    <label for="vaultBaseUrl">Artist Vault base URL</label>
-    <input id="vaultBaseUrl" placeholder="https://aiartistvault.com" />
+    .header {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
-    <label for="sessionToken">Import token</label>
-    <textarea id="sessionToken" rows="4" placeholder="Paste import token here or pull it from Vault"></textarea>
+    .header h1 {
+      font-size: 16px;
+      font-weight: 700;
+      color: white;
+    }
 
-    <button id="pullToken" class="success" type="button">Pull token from Vault</button>
+    .header p {
+      font-size: 11px;
+      color: rgba(255,255,255,0.7);
+    }
 
-    <div class="row">
-      <button id="saveSettings" class="secondary" type="button">Save</button>
-      <button id="openVault" class="secondary" type="button">Open Vault</button>
+    .body { padding: 16px; }
+
+    .site-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .site-badge.distrokid { background: #1DB954; color: #000; }
+    .site-badge.soundon { background: #ff6b35; color: #fff; }
+    .site-badge.unknown { background: #374151; color: #9ca3af; }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 8px;
+      transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary { background: #6366f1; color: white; }
+    .btn-secondary { background: #1f2937; color: #e2e8f0; }
+
+    .status {
+      margin-top: 12px;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      line-height: 1.5;
+      display: none;
+    }
+    .status.success { background: #052e16; border: 1px solid #166534; color: #86efac; }
+    .status.error { background: #2d0a0a; border: 1px solid #7f1d1d; color: #fca5a5; }
+    .status.info { background: #1e1b4b; border: 1px solid #3730a3; color: #a5b4fc; }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #1f2937;
+      margin: 12px 0;
+    }
+
+    .vault-link {
+      display: block;
+      text-align: center;
+      font-size: 11px;
+      color: #6366f1;
+      text-decoration: none;
+      padding: 4px;
+    }
+    .vault-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1>🎵 Artist Vault</h1>
+      <p>Catalog Connector</p>
     </div>
+  </div>
 
-    <button id="startImport" type="button">Start import</button>
+  <div class="body">
+    <div id="siteBadge" class="site-badge unknown">Detecting page...</div>
 
-    <div class="status" id="status">Ready.</div>
+    <button id="importBtn" class="btn btn-primary" disabled>
+      Import to Artist Vault
+    </button>
 
-    <script src="popup.js"></script>
-  </body>
+    <button id="openVault" class="btn btn-secondary">
+      Open Artist Vault
+    </button>
+
+    <div id="status" class="status"></div>
+
+    <hr class="divider" />
+
+    <a class="vault-link" href="https://aiartistvault.com" target="_blank">
+      aiartistvault.com
+    </a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
 </html>
