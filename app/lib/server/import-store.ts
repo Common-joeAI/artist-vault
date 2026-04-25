@@ -1,6 +1,6 @@
 /**
  * import-store.ts — DB-backed import session store
- * Replaces the old file-based distrokid-import-store.ts
+ * SQLite-compatible version (JSON fields stored as strings)
  * Supports: distrokid | soundon
  */
 
@@ -66,9 +66,10 @@ export async function markSessionCompleted(
     data: {
       status: result.releaseCount > 0 || !result.errors?.length ? "completed" : "failed",
       releaseCount: result.releaseCount,
-      importedReleaseIds: result.importedReleaseIds,
-      rawPayloadJson: result.rawPayload as object ?? undefined,
-      errors: result.errors ?? [],
+      // SQLite stores JSON as strings
+      importedReleaseIds: JSON.stringify(result.importedReleaseIds),
+      rawPayloadJson: result.rawPayload ? JSON.stringify(result.rawPayload) : null,
+      errors: JSON.stringify(result.errors ?? []),
       completedAt: new Date(),
     },
   });
@@ -79,7 +80,7 @@ export async function markSessionFailed(token: string, errors: string[]) {
     where: { sessionToken: token },
     data: {
       status: "failed",
-      errors,
+      errors: JSON.stringify(errors),
     },
   });
 }
