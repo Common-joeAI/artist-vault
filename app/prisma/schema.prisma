@@ -3,96 +3,40 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
 // ─────────────────────────────────────────────
-// Enums
+// NOTE: SQLite does not support native enums.
+// All enum-like fields use String with documented allowed values.
+// Switch provider to "postgresql" for production Supabase deployment.
 // ─────────────────────────────────────────────
 
-enum UserRole {
-  artist
-  radio_station
-  admin
-}
-
-enum ReleaseType {
-  SINGLE
-  EP
-  ALBUM
-}
-
-enum RegistrationStatus {
-  NOT_STARTED
-  IN_PROGRESS
-  SUBMITTED
-  APPROVED
-}
-
-enum ProOrg {
-  ASCAP
-  BMI
-}
-
-enum UploadCategory {
-  press
-  covers
-  masters
-  previews
-  misc
-}
-
-enum MetadataEnhancementStatus {
-  queued
-  processing
-  completed
-  failed
-}
-
-enum LyricsSource {
-  provider
-  transcription
-  manual
-}
-
-enum ImportProvider {
-  distrokid
-  soundon
-}
-
-enum ImportSessionStatus {
-  pending
-  running
-  completed
-  failed
-}
-
-enum RadioNotificationStatus {
-  pending
-  sent
-  failed
-}
-
-// ─────────────────────────────────────────────
-// Core User Model
-// ─────────────────────────────────────────────
+// UserRole: "artist" | "radio_station" | "admin"
+// ReleaseType: "SINGLE" | "EP" | "ALBUM"
+// RegistrationStatus: "NOT_STARTED" | "IN_PROGRESS" | "SUBMITTED" | "APPROVED"
+// ProOrg: "ASCAP" | "BMI"
+// UploadCategory: "press" | "covers" | "masters" | "previews" | "misc"
+// MetadataEnhancementStatus: "queued" | "processing" | "completed" | "failed"
+// LyricsSource: "provider" | "transcription" | "manual"
+// ImportProvider: "distrokid" | "soundon"
+// ImportSessionStatus: "pending" | "running" | "completed" | "failed"
+// RadioNotificationStatus: "pending" | "sent" | "failed"
 
 model User {
   id                    String          @id @default(cuid())
   email                 String          @unique
   passwordHash          String
   name                  String?
-  role                  UserRole        @default(artist)
+  role                  String          @default("artist")
   emailVerified         Boolean         @default(false)
   emailVerifyToken      String?
   passwordResetToken    String?
   passwordResetExpires  DateTime?
+  proOrg                String?         // "ASCAP" | "BMI"
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
-
-  // PRO org — enforces ASCAP XOR BMI
-  proOrg                ProOrg?
 
   uploads               Upload[]
   artistProfiles        ArtistProfile[]
@@ -104,73 +48,60 @@ model User {
   @@index([role])
 }
 
-// ─────────────────────────────────────────────
-// Radio Station Portal
-// ─────────────────────────────────────────────
-
 model RadioStation {
-  id              String    @id @default(cuid())
-  userId          String    @unique
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  stationName     String
-  contactName     String?
-  contactEmail    String?
-  website         String?
-  city            String?
-  state           String?
-  country         String    @default("US")
-  // Comma-separated genre preferences e.g. "hip-hop,r&b,pop"
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stationName      String
+  contactName      String?
+  contactEmail     String?
+  website          String?
+  city             String?
+  state            String?
+  country          String   @default("US")
   genrePreferences String?
-  notifyOnRelease Boolean   @default(true)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  notifyOnRelease  Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  notifications   RadioNotification[]
+  notifications    RadioNotification[]
 
   @@index([notifyOnRelease])
 }
 
 model RadioNotification {
-  id              String                  @id @default(cuid())
-  radioStationId  String
-  radioStation    RadioStation            @relation(fields: [radioStationId], references: [id], onDelete: Cascade)
-  releaseId       String
-  release         Release                 @relation(fields: [releaseId], references: [id], onDelete: Cascade)
-  status          RadioNotificationStatus @default(pending)
-  sentAt          DateTime?
-  errorMessage    String?
-  createdAt       DateTime                @default(now())
+  id             String   @id @default(cuid())
+  radioStationId String
+  radioStation   RadioStation @relation(fields: [radioStationId], references: [id], onDelete: Cascade)
+  releaseId      String
+  release        Release  @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  status         String   @default("pending") // "pending" | "sent" | "failed"
+  sentAt         DateTime?
+  errorMessage   String?
+  createdAt      DateTime @default(now())
 
   @@unique([radioStationId, releaseId])
   @@index([status, createdAt])
 }
 
-// ─────────────────────────────────────────────
-// PRO Registration
-// ─────────────────────────────────────────────
-
 model ProRegistration {
-  id            String             @id @default(cuid())
-  userId        String
-  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  trackId       String?
-  track         Track?             @relation(fields: [trackId], references: [id], onDelete: SetNull)
-  org           ProOrg
-  status        RegistrationStatus @default(NOT_STARTED)
-  workId        String?
-  submittedAt   DateTime?
-  approvedAt    DateTime?
-  notes         String?
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trackId     String?
+  track       Track?   @relation(fields: [trackId], references: [id], onDelete: SetNull)
+  org         String   // "ASCAP" | "BMI"
+  status      String   @default("NOT_STARTED")
+  workId      String?
+  submittedAt DateTime?
+  approvedAt  DateTime?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([userId, org])
   @@index([trackId])
 }
-
-// ─────────────────────────────────────────────
-// Artist Profile
-// ─────────────────────────────────────────────
 
 model ArtistProfile {
   id          String       @id @default(cuid())
@@ -178,7 +109,7 @@ model ArtistProfile {
   name        String
   bio         String?
   photoUrl    String?
-  genres      String?      // comma-separated
+  genres      String?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   ownerUser   User?        @relation(fields: [ownerUserId], references: [id], onDelete: SetNull)
@@ -190,26 +121,22 @@ model ArtistProfile {
 }
 
 model ArtistLink {
-  id         String        @id @default(cuid())
-  artistId   String
-  platform   String
-  label      String?
-  url        String
-  createdAt  DateTime      @default(now())
-  artist     ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  id        String        @id @default(cuid())
+  artistId  String
+  platform  String
+  label     String?
+  url       String
+  createdAt DateTime      @default(now())
+  artist    ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
 
   @@index([artistId, platform])
 }
 
-// ─────────────────────────────────────────────
-// Releases & Tracks
-// ─────────────────────────────────────────────
-
 model Release {
-  id               String               @id @default(cuid())
+  id               String    @id @default(cuid())
   artistId         String
   title            String
-  releaseType      ReleaseType          @default(SINGLE)
+  releaseType      String    @default("SINGLE")
   distributor      String?
   releaseDate      DateTime?
   coverArtUrl      String?
@@ -218,18 +145,16 @@ model Release {
   youtubeMusicUrl  String?
   notes            String?
 
-  // Release Ready checklist
-  masterUploaded   Boolean              @default(false)
-  coverArtUploaded Boolean              @default(false)
-  isReleaseReady   Boolean              @default(false)
+  masterUploaded    Boolean  @default(false)
+  coverArtUploaded  Boolean  @default(false)
+  isReleaseReady    Boolean  @default(false)
 
-  // Discovery metadata
-  discoveredOnYoutube Boolean           @default(false)
+  discoveredOnYoutube Boolean @default(false)
   youtubeUrl          String?
 
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
-  artist           ArtistProfile        @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  artist           ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
   tracks           Track[]
   radioNotifications RadioNotification[]
 
@@ -238,95 +163,86 @@ model Release {
 }
 
 model Track {
-  id                 String              @id @default(cuid())
-  releaseId          String
-  title              String
-  trackNumber        Int?
-  isrc               String?
-  lyrics             String?
-  masterFileUrl      String?
-  audioPreviewUrl    String?
-  durationSeconds    Int?
-  bpm                Int?
-  explicit           Boolean             @default(false)
+  id              String   @id @default(cuid())
+  releaseId       String
+  title           String
+  trackNumber     Int?
+  isrc            String?
+  lyrics          String?
+  masterFileUrl   String?
+  audioPreviewUrl String?
+  durationSeconds Int?
+  bpm             Int?
+  explicit        Boolean  @default(false)
 
-  // PRO registration (org enforced at User level)
-  proStatus          RegistrationStatus  @default(NOT_STARTED)
-  proWorkId          String?
-  proNotes           String?
+  proStatus  String   @default("NOT_STARTED")
+  proWorkId  String?
+  proNotes   String?
 
-  // Legacy fields kept for migration compatibility
-  ascapStatus        RegistrationStatus  @default(NOT_STARTED)
-  bmiStatus          RegistrationStatus  @default(NOT_STARTED)
-  ascapWorkId        String?
-  bmiWorkId          String?
-  ascapNotes         String?
-  bmiNotes           String?
+  ascapStatus String   @default("NOT_STARTED")
+  bmiStatus   String   @default("NOT_STARTED")
+  ascapWorkId String?
+  bmiWorkId   String?
+  ascapNotes  String?
+  bmiNotes    String?
 
-  writers            String?
-  producers          String?
-  splitNotes         String?
+  writers    String?
+  producers  String?
+  splitNotes String?
 
-  // AI Enhancement
-  enhancerStatus             MetadataEnhancementStatus @default(queued)
-  enhancedAt                 DateTime?
-  lastEnhancementError       String?
+  enhancerStatus         String    @default("queued")
+  enhancedAt             DateTime?
+  lastEnhancementError   String?
 
-  recognizedTitle            String?
-  recognizedArtist           String?
-  recognizedAlbum            String?
-  recognizedLabel            String?
-  recognizedReleaseDate      DateTime?
+  recognizedTitle       String?
+  recognizedArtist      String?
+  recognizedAlbum       String?
+  recognizedLabel       String?
+  recognizedReleaseDate DateTime?
 
-  upc                        String?
-  distributorName            String?
-  distributionKnown          Boolean?
-  distributionStatusText     String?
+  upc                    String?
+  distributorName        String?
+  distributionKnown      Boolean?
+  distributionStatusText String?
 
-  streamingLinksJson         Json?
-  providerRawJson            Json?
-  aiEnhancedJson             Json?
+  streamingLinksJson        String? // JSON
+  providerRawJson           String? // JSON
+  aiEnhancedJson            String? // JSON
+  lyricsText                String?
+  lyricsStructuredJson      String? // JSON
+  lyricsLrc                 String?
+  lyricsSrt                 String?
+  lyricsSource              String?
+  lyricsConfidence          Float?
+  humanAuthorshipFlagsJson  String? // JSON
+  suggestedWriterSplitsJson String? // JSON
+  pressKitSuggestionsJson   String? // JSON
 
-  lyricsText                 String?
-  lyricsStructuredJson       Json?
-  lyricsLrc                  String?
-  lyricsSrt                  String?
-  lyricsSource               LyricsSource?
-  lyricsConfidence           Float?
-
-  humanAuthorshipFlagsJson   Json?
-  suggestedWriterSplitsJson  Json?
-  pressKitSuggestionsJson    Json?
-
-  metadataJobs               MetadataEnhancementJob[]
-  proRegistrations           ProRegistration[]
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  release            Release             @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  metadataJobs     MetadataEnhancementJob[]
+  proRegistrations ProRegistration[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  release          Release  @relation(fields: [releaseId], references: [id], onDelete: Cascade)
 
   @@index([releaseId, trackNumber])
   @@index([isrc])
 }
 
-// ─────────────────────────────────────────────
-// Imports (DB-backed, replaces file store)
-// ─────────────────────────────────────────────
-
 model ImportSession {
-  id            String              @id @default(cuid())
-  userId        String?
-  user          User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
-  provider      ImportProvider
-  sessionToken  String              @unique @default(cuid())
-  status        ImportSessionStatus @default(pending)
-  releaseCount  Int                 @default(0)
-  importedReleaseIds Json?          // array of release IDs
-  rawPayloadJson Json?              // raw scraped data
-  errors        Json?               // array of error strings
-  expiresAt     DateTime
-  completedAt   DateTime?
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
+  id                 String    @id @default(cuid())
+  userId             String?
+  user               User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  provider           String    // "distrokid" | "soundon"
+  sessionToken       String    @unique @default(cuid())
+  status             String    @default("pending")
+  releaseCount       Int       @default(0)
+  importedReleaseIds String?   // JSON array
+  rawPayloadJson     String?   // JSON
+  errors             String?   // JSON array
+  expiresAt          DateTime
+  completedAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   @@index([userId, createdAt])
   @@index([sessionToken])
@@ -334,129 +250,100 @@ model ImportSession {
   @@index([provider, status])
 }
 
-// ─────────────────────────────────────────────
-// Uploads
-// ─────────────────────────────────────────────
-
 model Upload {
-  id               String         @id @default(cuid())
+  id               String   @id @default(cuid())
   filename         String
   originalName     String
   contentType      String
   size             Int
-  category         UploadCategory @default(misc)
+  category         String   @default("misc")
   relativePath     String
   publicUrl        String
-  uploadedAt       DateTime       @default(now())
+  uploadedAt       DateTime @default(now())
   uploadedByUserId String?
-  uploadedByUser   User?          @relation(fields: [uploadedByUserId], references: [id], onDelete: SetNull)
+  uploadedByUser   User?    @relation(fields: [uploadedByUserId], references: [id], onDelete: SetNull)
 
   @@index([category, uploadedAt])
   @@index([uploadedByUserId, uploadedAt])
 }
 
-// ─────────────────────────────────────────────
-// Press Kits
-// ─────────────────────────────────────────────
-
 model PressKit {
-  id            String        @id @default(cuid())
-  artistId      String
-  title         String
-  slug          String        @unique
-  isPublic      Boolean       @default(true)
-  shortBio      String?
-  longBio       String?
-  heroImageUrl  String?
-  websiteUrl    String?
-  contactEmail  String?
-  // Tracks to include in press kit (JSON array of track IDs)
-  featuredTrackIds Json?
-  // Radio-station-friendly format flag
-  radioFormat   Boolean       @default(false)
-  generatedAt   DateTime      @default(now())
-  artist        ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  id               String        @id @default(cuid())
+  artistId         String
+  title            String
+  slug             String        @unique
+  isPublic         Boolean       @default(true)
+  shortBio         String?
+  longBio          String?
+  heroImageUrl     String?
+  websiteUrl       String?
+  contactEmail     String?
+  featuredTrackIds String?       // JSON array
+  radioFormat      Boolean       @default(false)
+  generatedAt      DateTime      @default(now())
+  artist           ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
 }
 
-// ─────────────────────────────────────────────
-// AI Jobs
-// ─────────────────────────────────────────────
-
 model MetadataEnhancementJob {
-  id                    String   @id @default(cuid())
+  id                    String    @id @default(cuid())
   trackId               String
-  track                 Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
-
-  status                MetadataEnhancementStatus @default(queued)
+  track                 Track     @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  status                String    @default("queued")
   startedAt             DateTime?
   completedAt           DateTime?
   failedAt              DateTime?
-
   sourceFileName        String?
   sourceMimeType        String?
   sourceByteSize        Int?
-
   transcriptionProvider String?
   aiModel               String?
-
-  requestJson           Json?
-  resultJson            Json?
-  errorJson             Json?
-
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  requestJson           String?   // JSON
+  resultJson            String?   // JSON
+  errorJson             String?   // JSON
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   @@index([trackId, createdAt])
   @@index([status, createdAt])
 }
 
 model OnboardingDiscoveryJob {
-  id                    String   @id @default(cuid())
-  ownerUserId           String?
-  artistProfileId       String?
-
-  status                MetadataEnhancementStatus @default(queued)
-  startedAt             DateTime?
-  completedAt           DateTime?
-  failedAt              DateTime?
-
-  requestedUrlsJson     Json?
-  snapshotJson          Json?
-  resultJson            Json?
-  errorJson             Json?
-  aiModel               String?
-
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  id              String    @id @default(cuid())
+  ownerUserId     String?
+  artistProfileId String?
+  status          String    @default("queued")
+  startedAt       DateTime?
+  completedAt     DateTime?
+  failedAt        DateTime?
+  requestedUrlsJson String? // JSON
+  snapshotJson      String? // JSON
+  resultJson        String? // JSON
+  errorJson         String? // JSON
+  aiModel           String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   @@index([ownerUserId, createdAt])
   @@index([artistProfileId, createdAt])
   @@index([status, createdAt])
 }
 
-// Discovery job for finding external releases (YouTube, Spotify, etc.)
 model ExternalDiscoveryJob {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   ownerUserId     String?
   artistProfileId String?
   artistName      String
-
-  status          MetadataEnhancementStatus @default(queued)
+  status          String    @default("queued")
   startedAt       DateTime?
   completedAt     DateTime?
   failedAt        DateTime?
-
-  // Sources checked
   youtubeSearched   Boolean @default(false)
   spotifySearched   Boolean @default(false)
-
-  // Results: array of { platform, url, title, releaseDate, confidence }
-  discoveredJson    Json?
-  aiSummaryJson     Json?
-  errorJson         Json?
-
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  discoveredJson    String? // JSON
+  aiSummaryJson     String? // JSON
+  errorJson         String? // JSON
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   @@index([ownerUserId, createdAt])
   @@index([status, createdAt])
