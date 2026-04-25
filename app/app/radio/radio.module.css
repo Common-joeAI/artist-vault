@@ -1,0 +1,438 @@
+/* Radio Station Portal — shared styles */
+
+.shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  background: #0a0a12;
+  color: #e2e8f0;
+}
+
+/* ── Sidebar ─────────────────────────────────────────── */
+
+.sidebar {
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 1.5rem;
+  background: rgba(10, 10, 20, 0.9);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow-y: auto;
+}
+
+.brand {
+  font-weight: 800;
+  font-size: 1.15rem;
+  margin-bottom: 0.2rem;
+}
+
+.copy {
+  color: #9ca3af;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.nav {
+  display: grid;
+  gap: 0.4rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.nav a {
+  display: block;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+  font-size: 0.9rem;
+  transition: background 0.15s;
+  text-decoration: none;
+  color: inherit;
+}
+
+.nav a:hover {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.stationCard {
+  border-radius: 14px;
+  padding: 1rem;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  margin-bottom: 1rem;
+}
+
+.genres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.genreTag {
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(99, 102, 241, 0.2);
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  color: #a5b4fc;
+  text-transform: capitalize;
+}
+
+.notifyBadge {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.signout {
+  margin-top: auto;
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: transparent;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background 0.15s;
+}
+
+.signout:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* ── Main area ───────────────────────────────────────── */
+
+.main {
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.heading {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.subheading {
+  color: #9ca3af;
+  margin-top: 0.35rem;
+  font-size: 0.95rem;
+}
+
+.settingsBtn {
+  padding: 0.65rem 1.1rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.875rem;
+  text-decoration: none;
+  color: inherit;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.settingsBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ── Release grid ────────────────────────────────────── */
+
+.releaseGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 1.5rem;
+}
+
+.releaseCard {
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  transition: border-color 0.2s;
+}
+
+.releaseCard:hover {
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.releaseTop {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.coverArt {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.coverPlaceholder {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.releaseInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.releaseType {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6366f1;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.releaseTitle {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 0.2rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.artistName {
+  font-size: 0.875rem;
+  color: #d1d5db;
+  margin-bottom: 0.25rem;
+}
+
+.readyBadge {
+  font-size: 0.8rem;
+  color: #86efac;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  border-radius: 8px;
+  padding: 0.4rem 0.75rem;
+}
+
+/* ── Track list ──────────────────────────────────────── */
+
+.trackList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.trackRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.825rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.trackRow:last-child {
+  border-bottom: none;
+}
+
+.trackNum {
+  color: #6b7280;
+  width: 1.2rem;
+  flex-shrink: 0;
+  font-size: 0.75rem;
+}
+
+.trackTitle {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.explicitBadge {
+  font-size: 0.6rem;
+  background: #374151;
+  color: #9ca3af;
+  padding: 1px 4px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.isrc {
+  font-family: monospace;
+  font-size: 0.7rem;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.duration {
+  color: #6b7280;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+/* ── Release actions ─────────────────────────────────── */
+
+.releaseActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
+}
+
+.btnPrimary {
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  background: #6366f1;
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+
+.btnPrimary:hover {
+  opacity: 0.85;
+}
+
+.distributor {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+/* ── Notifications ───────────────────────────────────── */
+
+.section {
+  margin-top: 3rem;
+}
+
+.sectionTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.notifList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.notifRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.notifThumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.notifStatus {
+  margin-left: auto;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status_sent { background: rgba(34, 197, 94, 0.15); color: #86efac; }
+.status_pending { background: rgba(234, 179, 8, 0.15); color: #fde047; }
+.status_failed { background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
+
+/* ── Empty state ─────────────────────────────────────── */
+
+.emptyState {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #6b7280;
+}
+
+.emptyIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.emptyState h2 {
+  font-size: 1.25rem;
+  color: #d1d5db;
+  margin-bottom: 0.5rem;
+}
+
+.emptyState p {
+  max-width: 400px;
+  margin: 0 auto 1.5rem;
+  line-height: 1.6;
+}
+
+.editBtn {
+  display: inline-block;
+  padding: 0.65rem 1.25rem;
+  border-radius: 10px;
+  background: #6366f1;
+  color: white;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* ── Radio settings page ─────────────────────────────── */
+
+.settingsPage {
+  max-width: 640px;
+}
+
+/* ── Responsive ──────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .releaseGrid {
+    grid-template-columns: 1fr;
+  }
+}
