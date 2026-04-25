@@ -1,10 +1,10 @@
-import { SignupForm } from "@/components/auth/signup-form";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { getSession, redirectIfAuthenticated } from "@/lib/auth";
+import { SignupForm } from "@/components/auth/signup-form";
 
 export const metadata = {
-  title: "Sign Up Free",
+  title: "Sign Up — Artist Vault",
 };
 
 export default async function SignupPage() {
