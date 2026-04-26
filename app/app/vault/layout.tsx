@@ -42,7 +42,7 @@ export default async function VaultLayout({ children }: { children: ReactNode })
           <Link href="/vault">🏠 Dashboard</Link>
           <Link href="/vault/releases">💿 Releases</Link>
           <Link href="/vault/media">🎧 Media & Masters</Link>
-          <Link href="/vault/imports">📥 Import Music</Link>
+          <Link href="/vault/import">📥 Import Music</Link>
           <Link href="/vault/discovery">🔍 AI Discovery</Link>
           <Link href="/vault/pro">
             🎼 PRO Registration
