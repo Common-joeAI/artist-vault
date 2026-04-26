@@ -34,7 +34,11 @@ model User {
   emailVerifyToken      String?
   passwordResetToken    String?
   passwordResetExpires  DateTime?
-  proOrg                String?         // "ASCAP" | "BMI"
+  proOrg                String?         // "ASCAP" | "BMI" | "SESAC" | "NONE"
+  proWriterId           String?         // songwriter/composer member ID
+  proPublisherId        String?         // publisher member ID (if self-publishing)
+  ipiNumber             String?         // IPI/CAE number (international)
+  proSetupComplete      Boolean         @default(false)
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
 
