@@ -110,6 +110,10 @@ model ArtistProfile {
   bio         String?
   photoUrl    String?
   genres      String?
+  slug        String?      @unique
+  isPublic    Boolean      @default(false)
+  location    String?
+  website     String?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   ownerUser   User?        @relation(fields: [ownerUserId], references: [id], onDelete: SetNull)
@@ -385,4 +389,44 @@ model Prompt {
 
   @@index([artistId, createdAt])
   @@index([aiTool, createdAt])
+}
+
+model StyleDna {
+  id            String   @id @default(cuid())
+  artistId      String   @unique
+  topGenres     String?  // JSON array
+  topMoods      String?  // JSON array
+  topThemes     String?  // JSON array
+  topTools      String?  // JSON array
+  bpmRange      String?  // JSON {min, max, avg}
+  energyProfile String?  // low|medium|high
+  soundsLike    String?  // JSON array of similar artists
+  summary       String?  // 2-3 sentence Groq-generated bio
+  tags          String?  // JSON array
+  lastComputedAt DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([artistId])
+}
+
+model CollabPost {
+  id            String   @id @default(cuid())
+  artistId      String
+  title         String
+  description   String
+  type          String   @default("SEEKING") // SEEKING | OFFERING
+  role          String   // vocalist, beatmaker, mixing engineer, etc.
+  genres        String?  // JSON array
+  moods         String?  // JSON array
+  tools         String?  // JSON array
+  contactMethod String?  // email, discord, instagram, etc.
+  contactValue  String?
+  isOpen        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([artistId, createdAt])
+  @@index([isOpen, createdAt])
+  @@index([type, createdAt])
 }
