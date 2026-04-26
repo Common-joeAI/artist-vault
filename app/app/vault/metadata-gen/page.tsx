@@ -1,5 +1,7 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
 const GENRES = ['Hip-Hop','Pop','Electronic','R&B','Lo-Fi','Ambient','Rock','Jazz','Classical','Trap','House','Drill','Synthwave','Afrobeats','Latin','Country','Folk','Metal','Punk','Soul'];
 const AI_TOOLS = ['Suno','Udio','Musicfy','MusicGen','Loudly','Beatoven','Boomy','Other'];
@@ -23,6 +25,7 @@ type Metadata = {
   press_blurb?: string;
   release_type?: string;
   explicit?: boolean;
+  vault_context_used?: boolean;
 };
 
 const s: Record<string, React.CSSProperties> = {
@@ -34,10 +37,10 @@ const s: Record<string, React.CSSProperties> = {
   label: { display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6, marginTop: 14 },
   input: { width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, padding: '10px 14px', color: '#fff', fontSize: '0.9rem', boxSizing: 'border-box' as const },
   textarea: { width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, padding: '10px 14px', color: '#fff', fontSize: '0.9rem', boxSizing: 'border-box' as const, resize: 'vertical' as const, minHeight: 80 },
-  select: { width: '100%', background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, padding: '10px 14px', color: '#fff', fontSize: '0.9rem' },
   chipRow: { display: 'flex', flexWrap: 'wrap' as const, gap: 6, marginTop: 2 },
   chip: (active: boolean): React.CSSProperties => ({ border: active ? '2px solid #7c3aed' : '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: '4px 12px', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', background: active ? '#7c3aed22' : 'transparent', color: active ? '#a78bfa' : '#9ca3af' }),
   generateBtn: { width: '100%', background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', color: '#fff', border: 'none', borderRadius: 12, padding: '14px', fontWeight: 800, fontSize: '1rem', cursor: 'pointer', marginTop: '1.25rem', letterSpacing: '0.02em' },
+  vaultBanner: { display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.3)', borderRadius: 10, padding: '8px 14px', fontSize: '0.82rem', color: '#34d399', marginBottom: '1rem' },
   resultCard: { border: '1px solid rgba(124,58,237,0.4)', borderRadius: 16, padding: '1.75rem', background: 'rgba(124,58,237,0.05)', marginTop: '1.5rem' },
   resultTitle: { fontSize: '1.4rem', fontWeight: 800, marginBottom: 4 },
   metaRow: { display: 'flex', gap: 8, flexWrap: 'wrap' as const, margin: '10px 0' },
@@ -47,19 +50,25 @@ const s: Record<string, React.CSSProperties> = {
   tagRow: { display: 'flex', flexWrap: 'wrap' as const, gap: 6 },
   tag: { background: 'rgba(255,255,255,0.06)', borderRadius: 6, padding: '3px 10px', fontSize: '0.75rem', color: '#9ca3af', fontFamily: 'monospace' },
   copyBtn: { background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: '5px 12px', fontSize: '0.78rem', cursor: 'pointer', color: '#d1d5db', marginLeft: 8 },
-  saveBtn: { background: '#7c3aed', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 22px', fontWeight: 700, cursor: 'pointer', fontSize: '0.88rem', marginTop: 16 },
 };
 
 function copy(text: string) { navigator.clipboard.writeText(text).catch(() => {}); }
 
-export default function MetadataGenPage() {
-  const [title, setTitle] = useState('');
+function MetadataGenInner() {
+  const searchParams = useSearchParams();
+  const releaseId = searchParams.get('releaseId') ?? undefined;
+  const trackId = searchParams.get('trackId') ?? undefined;
+  const prefillTitle = searchParams.get('title') ?? '';
+  const prefillGenre = searchParams.get('genre') ?? '';
+
+  const [title, setTitle] = useState(prefillTitle);
   const [vibe, setVibe] = useState('');
-  const [genre, setGenre] = useState('');
+  const [genre, setGenre] = useState(prefillGenre);
   const [aiTool, setAiTool] = useState('');
   const [context, setContext] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<Metadata | null>(null);
+  const [vaultUsed, setVaultUsed] = useState(false);
   const [copied, setCopied] = useState('');
 
   async function generate() {
@@ -69,10 +78,11 @@ export default function MetadataGenPage() {
     const res = await fetch('/api/metadata-gen', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title, vibe, genre, aiTool, additionalContext: context }),
+      body: JSON.stringify({ title, vibe, genre, aiTool, additionalContext: context, releaseId, trackId }),
     });
     const data = await res.json();
     setResult(data.metadata || null);
+    setVaultUsed(!!data.vaultContextUsed);
     setLoading(false);
   }
 
@@ -87,7 +97,13 @@ export default function MetadataGenPage() {
   return (
     <div style={s.page}>
       <h1 style={s.h1}>✨ AI Metadata Generator</h1>
-      <p style={s.sub}>Describe your track — Groq writes your complete release metadata in seconds.</p>
+      <p style={s.sub}>Describe your track — Groq writes your complete release metadata using your vault data for consistency.</p>
+
+      {(releaseId || trackId) && (
+        <div style={s.vaultBanner}>
+          🗄️ Linked to your vault — existing release/track data will be used automatically
+        </div>
+      )}
 
       <div style={s.card}>
         <label style={s.label}>Track Title *</label>
@@ -123,6 +139,12 @@ export default function MetadataGenPage() {
 
       {result && (
         <div style={s.resultCard}>
+          {vaultUsed && (
+            <div style={{ ...s.vaultBanner, marginBottom: '1.25rem' }}>
+              🗄️ Generated using your vault profile, release history & past prompts for brand consistency
+            </div>
+          )}
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <div style={s.resultTitle}>{result.title}</div>
@@ -143,67 +165,66 @@ export default function MetadataGenPage() {
           </div>
 
           {result.mood && result.mood.length > 0 && (
-            <>
-              <div style={s.sectionHead}>Mood</div>
-              <div style={s.tagRow}>{result.mood.map(m => <span key={m} style={s.tag}>{m}</span>)}</div>
-            </>
+            <><div style={s.sectionHead}>Mood</div>
+            <div style={s.tagRow}>{result.mood.map(m => <span key={m} style={s.tag}>{m}</span>)}</div></>
           )}
 
           {result.description && (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <div style={s.sectionHead}>Description</div>
-                <button style={s.copyBtn} onClick={() => handleCopy(result.description!, 'desc')}>{copied === 'desc' ? '✅' : '📋'}</button>
-              </div>
-              <div style={s.textBlock}>{result.description}</div>
-            </>
+            <><div style={{ display: 'flex', alignItems: 'center' }}>
+              <div style={s.sectionHead}>Description</div>
+              <button style={s.copyBtn} onClick={() => handleCopy(result.description!, 'desc')}>{copied === 'desc' ? '✅' : '📋'}</button>
+            </div>
+            <div style={s.textBlock}>{result.description}</div></>
           )}
 
           {result.short_bio && (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <div style={s.sectionHead}>One-liner</div>
-                <button style={s.copyBtn} onClick={() => handleCopy(result.short_bio!, 'bio')}>{copied === 'bio' ? '✅' : '📋'}</button>
-              </div>
-              <div style={s.textBlock}>{result.short_bio}</div>
-            </>
+            <><div style={{ display: 'flex', alignItems: 'center' }}>
+              <div style={s.sectionHead}>One-liner</div>
+              <button style={s.copyBtn} onClick={() => handleCopy(result.short_bio!, 'bio')}>{copied === 'bio' ? '✅' : '📋'}</button>
+            </div>
+            <div style={s.textBlock}>{result.short_bio}</div></>
           )}
 
           {result.playlist_pitch && (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <div style={s.sectionHead}>Playlist Pitch</div>
-                <button style={s.copyBtn} onClick={() => handleCopy(result.playlist_pitch!, 'pitch')}>{copied === 'pitch' ? '✅' : '📋'}</button>
-              </div>
-              <div style={s.textBlock}>{result.playlist_pitch}</div>
-            </>
+            <><div style={{ display: 'flex', alignItems: 'center' }}>
+              <div style={s.sectionHead}>Playlist Pitch</div>
+              <button style={s.copyBtn} onClick={() => handleCopy(result.playlist_pitch!, 'pitch')}>{copied === 'pitch' ? '✅' : '📋'}</button>
+            </div>
+            <div style={s.textBlock}>{result.playlist_pitch}</div></>
           )}
 
           {result.press_blurb && (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <div style={s.sectionHead}>Press Blurb</div>
-                <button style={s.copyBtn} onClick={() => handleCopy(result.press_blurb!, 'press')}>{copied === 'press' ? '✅' : '📋'}</button>
-              </div>
-              <div style={s.textBlock}>{result.press_blurb}</div>
-            </>
+            <><div style={{ display: 'flex', alignItems: 'center' }}>
+              <div style={s.sectionHead}>Press Blurb</div>
+              <button style={s.copyBtn} onClick={() => handleCopy(result.press_blurb!, 'press')}>{copied === 'press' ? '✅' : '📋'}</button>
+            </div>
+            <div style={s.textBlock}>{result.press_blurb}</div></>
           )}
 
           {result.tags && result.tags.length > 0 && (
-            <>
-              <div style={s.sectionHead}>Tags</div>
-              <div style={s.tagRow}>{result.tags.map(t => <span key={t} style={s.tag}>#{t}</span>)}</div>
-            </>
+            <><div style={s.sectionHead}>Tags</div>
+            <div style={s.tagRow}>{result.tags.map(t => <span key={t} style={s.tag}>#{t}</span>)}</div></>
           )}
 
           {result.similar_artists && result.similar_artists.length > 0 && (
-            <>
-              <div style={s.sectionHead}>Sounds Like</div>
-              <div style={s.tagRow}>{result.similar_artists.map(a => <span key={a} style={s.tag}>{a}</span>)}</div>
-            </>
+            <><div style={s.sectionHead}>Sounds Like</div>
+            <div style={s.tagRow}>{result.similar_artists.map(a => <span key={a} style={s.tag}>{a}</span>)}</div></>
+          )}
+
+          {result.themes && result.themes.length > 0 && (
+            <><div style={s.sectionHead}>Themes</div>
+            <div style={s.tagRow}>{result.themes.map(t => <span key={t} style={s.tag}>{t}</span>)}</div></>
           )}
         </div>
       )}
     </div>
+  );
+}
+
+export default function MetadataGenPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: '2rem', color: '#9ca3af' }}>Loading...</div>}>
+      <MetadataGenInner />
+    </Suspense>
   );
 }
