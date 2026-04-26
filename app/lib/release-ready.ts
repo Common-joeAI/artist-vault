@@ -134,7 +134,6 @@ async function queueRadioNotifications(releaseId: string) {
       releaseId,
       status: "pending",
     })),
-    skipDuplicates: true,
   });
 }
 

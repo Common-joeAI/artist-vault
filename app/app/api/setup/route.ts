@@ -1,4 +1,4 @@
-import { createFirstUser } from "@/lib/auth";
+import { createUserAccount } from "@/lib/auth";
 import { isSetupComplete, isValidSetupToken } from "@/lib/setup";
 import { redirect } from "next/navigation";
 
@@ -16,6 +16,6 @@ export async function POST(req: Request) {
     return new Response("Invalid setup token.", { status: 403 });
   }
 
-  await createFirstUser(email, password);
+  await createUserAccount(email, password);
   redirect("/login");
 }

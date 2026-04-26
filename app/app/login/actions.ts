@@ -24,9 +24,9 @@ export async function loginAction(_: LoginFormState, formData: FormData): Promis
 
   let nextPath = "/vault";
 
-  if (user.userId) {
+  if (user.id) {
     const profile = await db.artistProfile.findFirst({
-      where: { ownerUserId: user.userId },
+      where: { ownerUserId: user.id },
       select: { id: true },
     });
 

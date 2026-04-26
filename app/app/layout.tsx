@@ -26,7 +26,35 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                var io = new IntersectionObserver(function(entries) {
+                  entries.forEach(function(e) {
+                    if (e.isIntersecting) {
+                      e.target.classList.add('is-visible');
+                      io.unobserve(e.target);
+                    }
+                  });
+                }, { threshold: 0.12 });
+                function observe() {
+                  document.querySelectorAll('.fade-up').forEach(function(el) {
+                    io.observe(el);
+                  });
+                }
+                if (document.readyState === 'loading') {
+                  document.addEventListener('DOMContentLoaded', observe);
+                } else {
+                  observe();
+                }
+              })();
+            `,
+          }}
+        />
+      </body>
     </html>
   );
 }

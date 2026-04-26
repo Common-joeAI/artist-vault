@@ -589,3 +589,582 @@ img {
     gap: 0.8rem;
   }
 }
+
+/* ═══════════════════════════════════════════════
+   FLAIR — Animations, Glows, Visual Polish
+   ═══════════════════════════════════════════════ */
+
+/* ─── Keyframes ─────────────────────────────── */
+@keyframes orb-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(30px, -25px) scale(1.08); }
+  66%       { transform: translate(-20px, 18px) scale(0.95); }
+}
+
+@keyframes orb-float-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  40%       { transform: translate(-35px, 20px) scale(1.1); }
+  70%       { transform: translate(20px, -30px) scale(0.92); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes badge-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(139,0,255,0); }
+  50%       { box-shadow: 0 0 0 6px rgba(139,0,255,0.14); }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes glow-line {
+  0%, 100% { opacity: 0.45; }
+  50%       { opacity: 0.9; }
+}
+
+@keyframes waveform {
+  0%, 100% { transform: scaleY(0.3); }
+  50%       { transform: scaleY(1); }
+}
+
+@keyframes card-glow-in {
+  from { box-shadow: var(--shadow); }
+  to   { box-shadow: var(--shadow), 0 0 0 1px rgba(139,0,255,0.22), 0 12px 40px rgba(139,0,255,0.18); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ─── Background ambient orbs ────────────────── */
+.marketing-shell::before,
+.marketing-shell::after {
+  content: "";
+  position: fixed;
+  border-radius: 999px;
+  pointer-events: none;
+  z-index: 0;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+.marketing-shell::before {
+  width: 700px;
+  height: 700px;
+  top: -200px;
+  left: -200px;
+  background: radial-gradient(circle, rgba(139,0,255,0.18) 0%, transparent 70%);
+  animation: orb-float 18s ease-in-out infinite;
+}
+
+.marketing-shell::after {
+  width: 500px;
+  height: 500px;
+  bottom: 20%;
+  right: -150px;
+  background: radial-gradient(circle, rgba(168,85,247,0.13) 0%, transparent 70%);
+  animation: orb-float-2 22s ease-in-out infinite;
+}
+
+/* ─── Hero badge pulse ───────────────────────── */
+.badge {
+  animation: badge-pulse 3s ease-in-out infinite;
+  border-color: rgba(139,0,255,0.3) !important;
+  background: rgba(139,0,255,0.08) !important;
+  color: #e9ddff !important;
+}
+
+/* ─── Shimmer CTA button ─────────────────────── */
+.button--primary {
+  background-size: 200% auto;
+  background-image: linear-gradient(
+    120deg,
+    var(--accent) 0%,
+    var(--accent-2) 30%,
+    #c084fc 50%,
+    var(--accent-2) 70%,
+    var(--accent) 100%
+  );
+  animation: shimmer 4s linear infinite;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.button--primary:hover {
+  box-shadow: 0 18px 50px rgba(139,0,255,0.45);
+  transform: translateY(-2px) scale(1.02);
+}
+
+/* ─── Ghost button hover ─────────────────────── */
+.button--ghost:hover {
+  border-color: rgba(139,0,255,0.45);
+  background: rgba(139,0,255,0.07);
+  box-shadow: 0 0 0 1px rgba(139,0,255,0.2);
+}
+
+/* ─── Hero headline gradient ─────────────────── */
+.hero-copy h1 {
+  background: linear-gradient(135deg, #ffffff 0%, #e9ddff 45%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Hero visual waveform bars ──────────────── */
+.hero-waveform {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 64px;
+  margin: 1rem 0;
+}
+
+.hero-waveform__bar {
+  width: 5px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--accent-2), var(--accent));
+  animation: waveform var(--dur, 1.2s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+  transform-origin: center;
+  opacity: 0.85;
+}
+
+/* ─── Animated glow line divider ─────────────── */
+.glow-divider {
+  width: 100%;
+  height: 1px;
+  margin: 4rem 0 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(139,0,255,0.6) 30%,
+    rgba(168,85,247,0.8) 50%,
+    rgba(139,0,255,0.6) 70%,
+    transparent 100%
+  );
+  animation: glow-line 3s ease-in-out infinite;
+  position: relative;
+}
+
+.glow-divider::after {
+  content: "";
+  position: absolute;
+  inset: -4px 10% -4px;
+  background: inherit;
+  filter: blur(8px);
+  opacity: 0.6;
+}
+
+/* ─── Card hover glow ────────────────────────── */
+.marketing-card {
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.marketing-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(139,0,255,0.3);
+  box-shadow: var(--shadow), 0 0 0 1px rgba(139,0,255,0.15), 0 16px 48px rgba(139,0,255,0.14);
+}
+
+/* ─── Feature card icon glow ─────────────────── */
+.feature-card__icon {
+  position: relative;
+  background: linear-gradient(135deg, rgba(139,0,255,0.25), rgba(168,85,247,0.15));
+  border-color: rgba(139,0,255,0.4) !important;
+  box-shadow: 0 0 20px rgba(139,0,255,0.2);
+}
+
+.feature-card__icon::after {
+  content: "✦";
+  color: #c084fc;
+  font-size: 1.2rem;
+}
+
+/* ─── Workflow & timeline number glow ────────── */
+.workflow-card__number,
+.timeline__step {
+  background: linear-gradient(135deg, rgba(139,0,255,0.2), rgba(168,85,247,0.1));
+  border-color: rgba(139,0,255,0.4);
+  box-shadow: 0 0 16px rgba(139,0,255,0.18);
+  text-shadow: 0 0 10px rgba(168,85,247,0.4);
+}
+
+/* ─── Featured pricing card glow pulse ───────── */
+.pricing-card--featured {
+  box-shadow: 0 20px 80px rgba(139, 0, 255, 0.2), 0 0 0 1px rgba(139,0,255,0.3);
+  animation: badge-pulse 4s ease-in-out infinite;
+}
+
+.pricing-card--featured .pricing-card__price {
+  background: linear-gradient(135deg, #fff 0%, #e9ddff 50%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Section heading gradient eyebrow ───────── */
+.section-heading .eyebrow,
+.marketing-page__hero .eyebrow {
+  color: #c084fc;
+  letter-spacing: 0.1em;
+}
+
+/* ─── Hero visual glow enhancement ──────────── */
+.hero-visual__glow {
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(139,0,255,0.35) 0%, rgba(168,85,247,0.15) 50%, transparent 70%);
+  animation: orb-float 12s ease-in-out infinite;
+}
+
+/* ─── Trust bar animated border ──────────────── */
+.trust-bar__inner {
+  border-image: linear-gradient(90deg, transparent, rgba(139,0,255,0.3), rgba(168,85,247,0.4), rgba(139,0,255,0.3), transparent) 1;
+  border-image-slice: 1;
+  border-radius: 0 !important;
+  position: relative;
+  border-radius: 20px !important;
+  overflow: hidden;
+}
+
+.trust-bar__inner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  padding: 1px;
+  background: linear-gradient(90deg, transparent, rgba(139,0,255,0.4), rgba(168,85,247,0.5), rgba(139,0,255,0.4), transparent);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+  pointer-events: none;
+  animation: shimmer 6s linear infinite;
+  background-size: 200% auto;
+}
+
+/* ─── CTA banner gradient bg ─────────────────── */
+.cta-banner {
+  background: linear-gradient(135deg, rgba(139,0,255,0.12), rgba(168,85,247,0.06));
+  border-color: rgba(139,0,255,0.25) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-banner::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(139,0,255,0.2) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ─── Scroll fade-up animations ──────────────── */
+.fade-up {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.fade-up.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ─── Noise texture overlay ──────────────────── */
+.marketing-shell {
+  position: relative;
+}
+
+.marketing-shell > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ─── Login / signup page glow ───────────────── */
+.auth-card {
+  position: relative;
+}
+
+.auth-card::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(139,0,255,0.4), rgba(168,85,247,0.2), transparent 60%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+  padding: 1px;
+  pointer-events: none;
+}
+
+/* ─── Vault sidebar nav highlight ────────────── */
+.vault-nav__item--active {
+  position: relative;
+}
+
+.vault-nav__item--active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 20%;
+  bottom: 20%;
+  width: 3px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--accent), var(--accent-2));
+  box-shadow: 0 0 12px rgba(139,0,255,0.6);
+}
+
+/* ═══════════════════════════════════════════════
+   PERSUASION SECTIONS — Ethos / Pathos / Logos
+   ═══════════════════════════════════════════════ */
+
+/* ─── Stat card numbers ──────────────────────── */
+.stat-card__number {
+  font-size: 1.9rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #fff 0%, #e9ddff 50%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.1;
+  margin-bottom: 0.2rem;
+}
+
+.stat-card__sub {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-top: 0.25rem;
+}
+
+/* ─── Pain section ───────────────────────────── */
+.pain-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.pain-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  border-color: rgba(239, 68, 68, 0.18) !important;
+  background: linear-gradient(180deg, rgba(239,68,68,0.05), rgba(255,255,255,0.02)) !important;
+}
+
+.pain-card:hover {
+  border-color: rgba(239,68,68,0.35) !important;
+}
+
+.pain-card__icon {
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.pain-card p {
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+.pain-resolution {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+.pain-resolution__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.25rem 2.5rem;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(139,0,255,0.1), rgba(168,85,247,0.06));
+  border: 1px solid rgba(139,0,255,0.25);
+}
+
+.pain-resolution__arrow {
+  font-size: 2rem;
+  background: linear-gradient(180deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: bounce-down 2s ease-in-out infinite;
+}
+
+@keyframes bounce-down {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(6px); }
+}
+
+.pain-resolution__inner p {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #e9ddff;
+}
+
+/* ─── Feature card emoji icon ────────────────── */
+.feature-card__emoji {
+  font-size: 1.75rem;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+/* ─── Feature proof badge ────────────────────── */
+.feature-proof {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.75rem 0;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(139,0,255,0.1);
+  border: 1px solid rgba(139,0,255,0.25);
+  color: #c084fc;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+/* ─── Steps list (how it works) ──────────────── */
+.steps-list {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.step-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  padding: 1.5rem 1.75rem;
+}
+
+.step-card__number {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(139,0,255,0.2), rgba(168,85,247,0.1));
+  border: 1px solid rgba(139,0,255,0.35);
+  display: grid;
+  place-items: center;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #c084fc;
+  box-shadow: 0 0 16px rgba(139,0,255,0.15);
+}
+
+.step-card__body h3 {
+  margin: 0 0 0.4rem;
+  font-size: 1.05rem;
+}
+
+.step-card__body p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* ─── Ethos banner ───────────────────────────── */
+.ethos-banner {
+  display: grid;
+  grid-template-columns: 1.3fr 0.7fr;
+  gap: 3rem;
+  align-items: center;
+  padding: 2.5rem;
+  background: linear-gradient(135deg, rgba(139,0,255,0.08), rgba(168,85,247,0.04)) !important;
+  border-color: rgba(139,0,255,0.2) !important;
+}
+
+.ethos-banner__left h2 {
+  margin: 0.5rem 0 0.75rem;
+}
+
+.ethos-list {
+  list-style: none;
+  padding: 0;
+  margin: 1.25rem 0 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.ethos-list li {
+  color: #e9ddff;
+  font-size: 0.95rem;
+}
+
+.ethos-stat-stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.ethos-stat {
+  display: flex;
+  flex-direction: column;
+  padding: 1.1rem 1.25rem;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(139,0,255,0.2);
+}
+
+.ethos-stat__num {
+  font-size: 1.8rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #fff 0%, #e9ddff 50%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.1;
+}
+
+.ethos-stat__label {
+  color: var(--muted);
+  font-size: 0.88rem;
+  margin-top: 0.2rem;
+}
+
+/* ─── Pricing badge ──────────────────────────── */
+.pricing-card__badge {
+  display: inline-flex;
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+/* ─── Responsive ─────────────────────────────── */
+@media (max-width: 1080px) {
+  .pain-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ethos-banner {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .pain-grid {
+    grid-template-columns: 1fr;
+  }
+  .step-card {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}

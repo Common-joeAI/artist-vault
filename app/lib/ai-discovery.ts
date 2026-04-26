@@ -306,8 +306,8 @@ export async function runExternalDiscovery(
         completedAt: new Date(),
         youtubeSearched: true,
         spotifySearched: true,
-        discoveredJson: withVaultFlags as object[],
-        aiSummaryJson: { summary: aiSummary } as object,
+        discoveredJson: JSON.stringify(withVaultFlags),
+        aiSummaryJson: JSON.stringify({ summary: aiSummary }),
       },
     });
 
@@ -318,7 +318,7 @@ export async function runExternalDiscovery(
       data: {
         status: "failed",
         failedAt: new Date(),
-        errorJson: { message: error instanceof Error ? error.message : "Unknown error" } as object,
+        errorJson: JSON.stringify({ message: error instanceof Error ? error.message : "Unknown error" }),
       },
     });
     throw error;

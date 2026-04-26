@@ -19,6 +19,11 @@ export default async function DiscoveryPage() {
     orderBy: { createdAt: "desc" },
   });
 
+  const parseJson = (raw: string | null | undefined) => {
+    if (!raw) return null;
+    try { return JSON.parse(raw); } catch { return null; }
+  };
+
   return (
     <div>
       <div style={{ marginBottom: "2rem" }}>
@@ -38,8 +43,8 @@ export default async function DiscoveryPage() {
         lastJob={lastJob ? {
           status: lastJob.status,
           completedAt: lastJob.completedAt?.toISOString() ?? null,
-          discovered: (lastJob.discoveredJson as unknown[]) ?? [],
-          aiSummary: (lastJob.aiSummaryJson as { summary?: string } | null)?.summary ?? null,
+          discovered: (parseJson(lastJob.discoveredJson) as unknown[]) ?? [],
+          aiSummary: (parseJson(lastJob.aiSummaryJson) as { summary?: string } | null)?.summary ?? null,
         } : null}
       />
     </div>
