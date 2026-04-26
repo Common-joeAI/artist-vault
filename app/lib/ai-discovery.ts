@@ -78,11 +78,15 @@ async function searchSpotify(artistName: string): Promise<DiscoveredRelease[]> {
     if (!exactMatch) return [];
 
     const albumsRes = await fetch(
-      `https://api.spotify.com/v1/artists/${exactMatch.id}/albums?include_groups=album,single,ep&limit=50`,
+      `https://api.spotify.com/v1/artists/${exactMatch.id}/albums?include_groups=album,single,ep&limit=50&market=US`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
-    if (!albumsRes.ok) return [];
+    if (!albumsRes.ok) {
+      const errText = await albumsRes.text().catch(() => '');
+      console.error(`Spotify albums 400 for artist ${exactMatch.id}: ${albumsRes.status} ${errText}`);
+      return [];
+    }
     const albumsData = await albumsRes.json() as {
       items: Array<{
         id: string;
