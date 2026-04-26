@@ -2,14 +2,12 @@
  * ai-discovery.ts
  *
  * AI-powered external catalog discovery.
- * Uses the Spotify public API + YouTube Data API to find an artist's
- * releases outside their distributor, then Claude analyzes and ranks results.
+ * Uses Spotify public API + YouTube Data API to find an artist's releases,
+ * then uses Groq (free, Llama 3) to analyze results.
+ * Falls back to a static summary if no AI key is configured.
  */
 
-import Anthropic from "@anthropic-ai/sdk";
 import { db } from "@/lib/db";
-
-const claude = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // ─────────────────────────────────────────────
 // Types
@@ -36,7 +34,7 @@ export type DiscoveryResult = {
 };
 
 // ─────────────────────────────────────────────
-// Spotify search (public API — no auth needed for search)
+// Spotify search
 // ─────────────────────────────────────────────
 
 async function searchSpotify(artistName: string): Promise<DiscoveredRelease[]> {
@@ -44,12 +42,11 @@ async function searchSpotify(artistName: string): Promise<DiscoveredRelease[]> {
   const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) {
-    console.warn("Spotify credentials not configured — skipping Spotify discovery.");
+    console.warn("Spotify credentials not configured — skipping.");
     return [];
   }
 
   try {
-    // Get client credentials token
     const tokenRes = await fetch("https://accounts.spotify.com/api/token", {
       method: "POST",
       headers: {
@@ -63,7 +60,6 @@ async function searchSpotify(artistName: string): Promise<DiscoveredRelease[]> {
     const tokenData = await tokenRes.json() as { access_token: string };
     const token = tokenData.access_token;
 
-    // Search for artist
     const searchRes = await fetch(
       `https://api.spotify.com/v1/search?q=${encodeURIComponent(artistName)}&type=artist&limit=3`,
       { headers: { Authorization: `Bearer ${token}` } }
@@ -81,7 +77,6 @@ async function searchSpotify(artistName: string): Promise<DiscoveredRelease[]> {
 
     if (!exactMatch) return [];
 
-    // Get albums
     const albumsRes = await fetch(
       `https://api.spotify.com/v1/artists/${exactMatch.id}/albums?include_groups=album,single,ep&limit=50`,
       { headers: { Authorization: `Bearer ${token}` } }
@@ -123,7 +118,7 @@ async function searchYouTube(artistName: string): Promise<DiscoveredRelease[]> {
   const apiKey = process.env.YOUTUBE_API_KEY;
 
   if (!apiKey) {
-    console.warn("YouTube API key not configured — skipping YouTube discovery.");
+    console.warn("YouTube API key not configured — skipping.");
     return [];
   }
 
@@ -131,7 +126,6 @@ async function searchYouTube(artistName: string): Promise<DiscoveredRelease[]> {
     const queries = [
       `${artistName} official audio`,
       `${artistName} music video`,
-      `${artistName} full album`,
     ];
 
     const results: DiscoveredRelease[] = [];
@@ -140,7 +134,6 @@ async function searchYouTube(artistName: string): Promise<DiscoveredRelease[]> {
       const res = await fetch(
         `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=10&key=${apiKey}`
       );
-
       if (!res.ok) continue;
 
       const data = await res.json() as {
@@ -170,7 +163,6 @@ async function searchYouTube(artistName: string): Promise<DiscoveredRelease[]> {
       }
     }
 
-    // Deduplicate by URL
     const unique = new Map(results.map((r) => [r.url, r]));
     return [...unique.values()];
   } catch (err) {
@@ -208,10 +200,10 @@ async function crossReferenceWithVault(
 }
 
 // ─────────────────────────────────────────────
-// Claude analysis
+// AI analysis — Groq (free) with static fallback
 // ─────────────────────────────────────────────
 
-async function analyzeWithClaude(
+async function analyzeWithAI(
   artistName: string,
   discovered: DiscoveredRelease[]
 ): Promise<string> {
@@ -222,34 +214,66 @@ async function analyzeWithClaude(
   }
 
   const releaseList = newReleases
-    .slice(0, 20) // cap at 20 for token budget
-    .map((r, i) => `${i + 1}. "${r.title}" on ${r.platform} (${r.releaseDate ?? "unknown date"}) — ${r.url}`)
+    .slice(0, 20)
+    .map((r, i) => `${i + 1}. "${r.title}" on ${r.platform} (${r.releaseDate ?? "unknown date"})`)
     .join("\n");
 
-  const message = await claude.messages.create({
-    model: "claude-opus-4-5",
-    max_tokens: 600,
-    messages: [
-      {
-        role: "user",
-        content: `You are helping a music artist named "${artistName}" manage their catalog.
-        
-I found these releases that don't appear to be in their vault yet:
+  const groqKey = process.env.GROQ_API_KEY;
+
+  // ── Groq (free Llama 3) ──
+  if (groqKey) {
+    try {
+      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${groqKey}`,
+        },
+        body: JSON.stringify({
+          model: "llama3-8b-8192",
+          max_tokens: 400,
+          messages: [
+            {
+              role: "user",
+              content: `You are helping a music artist named "${artistName}" manage their catalog.
+
+I found these releases not yet in their vault:
 
 ${releaseList}
 
-Please provide a brief, friendly analysis (3-5 sentences) covering:
-1. How many new releases were found and on which platforms
-2. Any patterns you notice (e.g., lots of YouTube content, older releases)
-3. A recommendation for what to do next (which releases to prioritize adding)
+Give a brief, friendly analysis (3-5 sentences):
+1. How many new releases found and on which platforms
+2. Any patterns (older releases, lots of singles, etc.)
+3. What to prioritize adding first
 
-Be concise and practical. Talk directly to the artist.`,
-      },
-    ],
-  });
+Be concise and talk directly to the artist.`,
+            },
+          ],
+        }),
+      });
 
-  const text = message.content[0];
-  return text.type === "text" ? text.text : "Discovery complete. Review the results above.";
+      if (res.ok) {
+        const data = await res.json() as {
+          choices: Array<{ message: { content: string } }>;
+        };
+        const text = data.choices?.[0]?.message?.content;
+        if (text) return text;
+      }
+    } catch (err) {
+      console.error("Groq analysis error:", err);
+    }
+  }
+
+  // ── Static fallback (no API key needed) ──
+  const platforms = [...new Set(newReleases.map((r) => r.platform))];
+  const earliest = newReleases
+    .map((r) => r.releaseDate)
+    .filter(Boolean)
+    .sort()[0];
+
+  return `Found ${newReleases.length} release${newReleases.length !== 1 ? "s" : ""} not yet in your vault across ${platforms.join(" and ")}. ` +
+    (earliest ? `Your earliest discovered release dates back to ${earliest}. ` : "") +
+    `Start by adding your most recent releases first to make sure your active catalog is complete, then work backwards through older material.`;
 }
 
 // ─────────────────────────────────────────────
@@ -261,7 +285,6 @@ export async function runExternalDiscovery(
   artistName: string,
   ownerUserId?: string | null
 ): Promise<DiscoveryResult> {
-  // Create discovery job record
   const job = await db.externalDiscoveryJob.create({
     data: {
       ownerUserId: ownerUserId ?? null,
@@ -273,19 +296,14 @@ export async function runExternalDiscovery(
   });
 
   try {
-    // Run searches in parallel
     const [spotifyResults, youtubeResults] = await Promise.all([
       searchSpotify(artistName),
       searchYouTube(artistName),
     ]);
 
     const allDiscovered = [...spotifyResults, ...youtubeResults];
-
-    // Cross-reference with vault
     const withVaultFlags = await crossReferenceWithVault(artistProfileId, allDiscovered);
-
-    // AI analysis
-    const aiSummary = await analyzeWithClaude(artistName, withVaultFlags);
+    const aiSummary = await analyzeWithAI(artistName, withVaultFlags);
 
     const newReleases = withVaultFlags.filter((r) => !r.alreadyInVault);
     const alreadyInVault = withVaultFlags.filter((r) => r.alreadyInVault);
@@ -298,7 +316,6 @@ export async function runExternalDiscovery(
       aiSummary,
     };
 
-    // Save results
     await db.externalDiscoveryJob.update({
       where: { id: job.id },
       data: {
@@ -318,65 +335,9 @@ export async function runExternalDiscovery(
       data: {
         status: "failed",
         failedAt: new Date(),
-        errorJson: JSON.stringify({ message: error instanceof Error ? error.message : "Unknown error" }),
+        errorJson: JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
       },
     });
     throw error;
-  }
-}
-
-// ─────────────────────────────────────────────
-// AI metadata enhancement post-import
-// ─────────────────────────────────────────────
-
-export async function enhanceImportedReleaseMetadata(
-  releaseId: string,
-  rawData: Record<string, unknown>
-): Promise<Record<string, unknown>> {
-  const release = await db.release.findUnique({
-    where: { id: releaseId },
-    include: { tracks: true, artist: true },
-  });
-
-  if (!release) throw new Error("Release not found.");
-
-  const message = await claude.messages.create({
-    model: "claude-opus-4-5",
-    max_tokens: 1000,
-    messages: [
-      {
-        role: "user",
-        content: `You are a music metadata expert. Review this imported release data and suggest improvements.
-
-Release: "${release.title}" by ${release.artist.name}
-Distributor: ${release.distributor ?? "Unknown"}
-Tracks: ${release.tracks.map((t) => `"${t.title}" (ISRC: ${t.isrc ?? "missing"})`).join(", ")}
-
-Raw import data:
-${JSON.stringify(rawData, null, 2).slice(0, 2000)}
-
-Return a JSON object with these fields (only include fields where you have confident suggestions):
-{
-  "genre": "suggested genre",
-  "subgenre": "suggested subgenre", 
-  "mood": "suggested mood tags (comma separated)",
-  "missingIsrcs": ["list of track titles missing ISRCs"],
-  "missingInfo": ["list of important missing fields"],
-  "releaseNotes": "any important notes about this release",
-  "suggestedTags": ["tag1", "tag2"]
-}
-
-Only return valid JSON, no explanation.`,
-      },
-    ],
-  });
-
-  const text = message.content[0];
-  if (text.type !== "text") return {};
-
-  try {
-    return JSON.parse(text.text.trim());
-  } catch {
-    return { rawSuggestion: text.text };
   }
 }

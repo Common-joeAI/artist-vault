@@ -348,3 +348,41 @@ model ExternalDiscoveryJob {
   @@index([ownerUserId, createdAt])
   @@index([status, createdAt])
 }
+
+model Prompt {
+  id            String   @id @default(cuid())
+  artistId      String
+  trackId       String?
+  releaseId     String?
+
+  // The actual prompt text
+  promptText    String
+
+  // AI tool used (suno, udio, aimusicgen, musicfy, etc.)
+  aiTool        String   @default("suno")
+
+  // Version / model used inside the tool
+  aiModel       String?
+
+  // Style tags the user manually adds
+  styleTags     String?  // JSON array stored as string
+
+  // Groq-enhanced metadata
+  enhancedTitle       String?
+  enhancedGenre       String?
+  enhancedMood        String?
+  enhancedDescription String?
+  enhancedTags        String?  // JSON array
+  groqEnhancedAt      DateTime?
+
+  // Outcome
+  resultRating  Int?     // 1-5 stars
+  resultNotes   String?
+  isPublic      Boolean  @default(false)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([artistId, createdAt])
+  @@index([aiTool, createdAt])
+}
