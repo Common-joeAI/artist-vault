@@ -45,6 +45,7 @@ export default async function VaultLayout({ children }: { children: ReactNode })
           <Link href="/vault/import">📥 Import Music</Link>
           <Link href="/vault/discovery">🔍 AI Discovery</Link>
           <Link href="/vault/prompts">🧠 Prompt Vault</Link>
+          <Link href="/vault/metadata-gen">✨ Metadata Generator</Link>
           <Link href="/vault/pro">
             🎼 PRO Registration
             {user?.proOrg && (
