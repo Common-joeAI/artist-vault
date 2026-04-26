@@ -127,18 +127,42 @@ function extractHtmlEvidence(html: string) {
     if (jsonLd.length >= 8) break;
   }
 
-  const visibleText = trimText(
-    decodeHtml(
-      html
-        .replace(/<script[\s\S]*?<\/script>/gi, " ")
-        .replace(/<style[\s\S]*?<\/style>/gi, " ")
-        .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
-        .replace(/<[^>]+>/g, " "),
-    ),
-    MAX_VISIBLE_TEXT_CHARS,
+  const rawVisible = decodeHtml(
+    html
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
   );
+  const visibleText = trimText(denoiseVisibleText(rawVisible), MAX_VISIBLE_TEXT_CHARS);
 
   return { title, meta, jsonLd, visibleText };
+}
+
+const UI_NOISE_PATTERNS: RegExp[] = [
+  /^view all (songs?|voices?|playlists?|albums?|tracks?|videos?)$/i,
+  /^play .{0,80}$/i,
+  /^@[\w.]{1,40}$/,
+  /^\d+\s*(songs?|tracks?|plays?|likes?|followers?|views?)$/i,
+  /^(follow|like|share|more|menu|home|search|library|explore|trending|charts|new|hot|top|settings|notifications|cancel|close|back)$/i,
+  /join me on suno/i,
+  /^[A-Z0-9\-]+ \| .{0,80}(suno|udio|spotify)/i,
+  /^(sign in|log in|sign up|create account|get started|download app)$/i,
+  /^untitled$/i,
+];
+
+function denoiseVisibleText(raw: string): string {
+  return raw
+    .split(/\s{2,}|[
+
+|]+/)
+    .map(l => l.trim())
+    .filter(l => {
+      if (l.length < 2 || l.length > 150) return false;
+      return !UI_NOISE_PATTERNS.some(p => p.test(l));
+    })
+    .slice(0, 800)
+    .join(' | ');
 }
 
 function safeHttpUrl(value: string) {

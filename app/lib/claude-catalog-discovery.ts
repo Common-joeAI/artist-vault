@@ -58,6 +58,36 @@ export type SiteSnapshot = {
   error?: string;
 };
 
+// Lines that are clearly streaming UI chrome — not real release titles
+const UI_NOISE_PATTERNS: RegExp[] = [
+  /^view all (songs?|voices?|playlists?|albums?|tracks?|videos?)$/i,
+  /^play .{0,80}$/i,
+  /^@[\w.]{1,40}$/,
+  /^\d+\s*(songs?|tracks?|plays?|likes?|followers?|views?)$/i,
+  /^(follow|like|share|more|menu|home|search|library|explore|trending|charts|new|hot|top|settings|notifications)$/i,
+  /^[A-Z0-9\-]+ \| .{0,60}suno/i,
+  /join me on suno/i,
+  /^(sign in|log in|sign up|create account|get started|download app)$/i,
+  /^untitled$/i,
+  /^(single|ep|album|playlist)$/i,
+];
+
+function isUiNoise(line: string): boolean {
+  const t = line.trim();
+  if (t.length < 2 || t.length > 120) return true;
+  return UI_NOISE_PATTERNS.some(p => p.test(t));
+}
+
+function denoisePageText(raw: string): string {
+  return raw
+    .split(/[
+|]+/)
+    .map(l => l.trim())
+    .filter(l => l.length > 1 && !isUiNoise(l))
+    .slice(0, 600)
+    .join(' | ');
+}
+
 function cleanText(value: string) {
   return value
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
@@ -165,7 +195,7 @@ export async function fetchSiteSnapshot(url: string): Promise<SiteSnapshot> {
       canonicalUrl,
       imageUrl,
       jsonLd: extractJsonLd(html),
-      textSample: cleanText(html).slice(0, MAX_SNAPSHOT_CHARS),
+      textSample: denoisePageText(cleanText(html)).slice(0, MAX_SNAPSHOT_CHARS),
     };
   } catch (error) {
     return {
