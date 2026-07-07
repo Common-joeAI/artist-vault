@@ -37,6 +37,10 @@ model User {
   proOrg                String?         // "ASCAP" | "BMI" | "SESAC"
   proMemberId           String?         // ASCAP or BMI member ID
   producerIpiNumber     String?         // Optional IPI/CAE producer number
+  proWriterId           String?         // songwriter/composer member ID (CrashOverride PRO flow)
+  proPublisherId        String?         // publisher member ID (if self-publishing)
+  ipiNumber             String?         // IPI/CAE number (international)
+  proSetupComplete      Boolean         @default(false)
   // Stripe Subscription
   isPaid                Boolean         @default(false)
   stripeCustomerId      String?
