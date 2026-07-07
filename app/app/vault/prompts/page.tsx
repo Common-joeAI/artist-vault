@@ -32,7 +32,7 @@ type Prompt = {
 };
 
 // ── Styles ───────────────────────────────────────────────────────────────────
-const s: Record<string, React.CSSProperties> = {
+const s: Record<string, any> = {
   page: { maxWidth: 900, margin: '0 auto', padding: '2rem 1rem' },
   row: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' },
   h1: { fontSize: '1.6rem', fontWeight: 800, margin: 0 },
@@ -147,7 +147,7 @@ export default function PromptsPage() {
         <div style={s.emptyState}>
           <div style={{ fontSize: '3rem', marginBottom: 12 }}>🧠</div>
           <div style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: 8 }}>No prompts saved yet</div>
-          <div style={{ fontSize: '0.9rem' }}>Save the prompt that made your best track — Groq will analyze and tag it automatically.</div>
+          <div style={{ fontSize: '0.9rem' }}>Save the prompt that made your best track  -  Groq will analyze and tag it automatically.</div>
         </div>
       ) : (
         <div style={s.grid}>
@@ -214,7 +214,7 @@ export default function PromptsPage() {
             <label style={s.label}>Notes (optional)</label>
             <input style={s.input} placeholder="What worked, what didn't..." value={notes} onChange={e => setNotes(e.target.value)} />
 
-            <label style={s.label} style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 16 }}>
+            <label style={{ ...s.label, display: 'flex', alignItems: 'center', gap: 10, marginTop: 16 }}>
               <input type="checkbox" checked={isPublic} onChange={e => setIsPublic(e.target.checked)} />
               Make this prompt public (share with the AI artist community)
             </label>

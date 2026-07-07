@@ -34,7 +34,15 @@ model User {
   emailVerifyToken      String?
   passwordResetToken    String?
   passwordResetExpires  DateTime?
-  proOrg                String?         // "ASCAP" | "BMI"
+  proOrg                String?         // "ASCAP" | "BMI" | "SESAC"
+  proMemberId           String?         // ASCAP or BMI member ID
+  producerIpiNumber     String?         // Optional IPI/CAE producer number
+  // Stripe Subscription
+  isPaid                Boolean         @default(false)
+  stripeCustomerId      String?
+  stripeSubscriptionId  String?
+  subscriptionStatus    String?         // "active" | "canceled" | "past_due" | "trialing"
+  subscriptionEndsAt    DateTime?
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
 
@@ -274,15 +282,22 @@ model Upload {
 model PressKit {
   id               String        @id @default(cuid())
   artistId         String
-  title            String
+  title            String?
   slug             String        @unique
   isPublic         Boolean       @default(true)
+  bio              String?
+  tone             String?
   shortBio         String?
   longBio          String?
   heroImageUrl     String?
+  photoUrl         String?
   websiteUrl       String?
   contactEmail     String?
-  featuredTrackIds String?       // JSON array
+  epkUrl           String?
+  featuredTrackIds String?
+  topTrackIds      String?
+  lyricsExcerpts   String?
+  streamingLinks   String?
   radioFormat      Boolean       @default(false)
   generatedAt      DateTime      @default(now())
   artist           ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
@@ -430,3 +445,20 @@ model CollabPost {
   @@index([isOpen, createdAt])
   @@index([type, createdAt])
 }
+model DiscoveryFeedback {
+  id              String   @id @default(cuid())
+  ownerUserId     String
+  artistProfileId String?
+  jobId           String?
+  platform        String
+  url             String
+  title           String
+  artist          String
+  verdict         String   // "mine" | "not_mine"
+  createdAt       DateTime @default(now())
+
+  @@index([ownerUserId])
+  @@index([platform, url])
+  @@index([verdict])
+}
+

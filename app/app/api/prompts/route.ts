@@ -9,7 +9,7 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 async function enhanceWithGroq(promptText: string, aiTool: string) {
   try {
     const completion = await groq.chat.completions.create({
-      model: 'llama3-8b-8192',
+      model: 'llama-3.1-8b-instant',
       messages: [{
         role: 'user',
         content: `You are a music metadata expert. Analyze this AI music generation prompt and extract/infer metadata.
@@ -36,7 +36,7 @@ Respond with ONLY valid JSON (no markdown, no explanation):
   }
 }
 
-// GET — list prompts for current artist
+// GET  -  list prompts for current artist
 export async function GET(req: NextRequest) {
   try {
     const session = await requireSession();
@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST — create a new prompt (with Groq enhancement)
+// POST  -  create a new prompt (with Groq enhancement)
 export async function POST(req: NextRequest) {
   try {
     const session = await requireSession();

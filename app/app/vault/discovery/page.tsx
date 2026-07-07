@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { DiscoveryClient } from "./discovery-client";
 
 export const metadata = {
-  title: "AI Discovery — Artist Vault",
+  title: "AI Discovery  -  Artist Vault",
 };
 
 export default async function DiscoveryPage() {
@@ -31,7 +31,7 @@ export default async function DiscoveryPage() {
           🔍 AI Discovery
         </h2>
         <p style={{ color: "#9ca3af", marginTop: "0.4rem" }}>
-          Find music you've released outside your distributor — YouTube, Spotify,
+          Find music you've released outside your distributor  -  YouTube, Spotify,
           and more. Claude will analyze the results and flag anything missing from
           your vault.
         </p>

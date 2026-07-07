@@ -4,7 +4,7 @@ import { getSession, redirectIfAuthenticated } from "@/lib/auth";
 import { SignupForm } from "@/components/auth/signup-form";
 
 export const metadata = {
-  title: "Sign Up — Artist Vault",
+  title: "Sign Up  -  Artist Vault",
 };
 
 export default async function SignupPage() {

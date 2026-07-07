@@ -1,7 +1,5 @@
-import { promises as fs } from "node:fs";
-import path from "node:path";
-import crypto from "node:crypto";
-import { inboxDir } from "./distrokid-import-store";
+import { db } from "@/lib/db";
+import { getSession } from "@/lib/auth";
 
 export type ImportedTrack = {
   source_track_id: string;
@@ -35,6 +33,7 @@ export function sanitizeIncomingPayload(body: unknown): {
   }
 
   const payload = body as Record<string, unknown>;
+
   if (payload.provider !== "distrokid") {
     throw new Error("Invalid provider.");
   }
@@ -161,13 +160,73 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
-/**
- * Phase 1 adapter:
- * write each imported release into a filesystem inbox.
- *
- * Replace this with your real DB import path once you wire Artist Vault's
- * release tables into the importer.
- */
+function inferReleaseType(trackCount: number): "SINGLE" | "EP" | "ALBUM" {
+  if (trackCount <= 1) return "SINGLE";
+  if (trackCount <= 6) return "EP";
+  return "ALBUM";
+}
+
+function mapStoreUrl(
+  stores: Array<{ name: string; url: string }>,
+  matcher: RegExp,
+): string | null {
+  const hit = stores.find((store) => matcher.test(store.name) || matcher.test(store.url));
+  return hit?.url ?? null;
+}
+
+function parseDurationToSeconds(durationText: string | null): number | null {
+  if (!durationText) return null;
+
+  const text = durationText.trim();
+
+  // mm:ss or hh:mm:ss
+  if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(text)) {
+    const parts = text.split(":").map((part) => Number.parseInt(part, 10));
+    if (parts.some((part) => Number.isNaN(part))) return null;
+
+    if (parts.length === 2) {
+      return (parts[0] * 60) + parts[1];
+    }
+
+    return (parts[0] * 3600) + (parts[1] * 60) + parts[2];
+  }
+
+  // plain integer seconds
+  if (/^\d+$/.test(text)) {
+    const parsed = Number.parseInt(text, 10);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
+}
+
+async function getTargetArtistProfileId(): Promise<string> {
+  const session = await getSession();
+
+  if (session?.userId) {
+    const owned = await db.artistProfile.findFirst({
+      where: { ownerUserId: session.userId },
+      orderBy: { createdAt: "asc" },
+      select: { id: true },
+    });
+
+    if (owned) {
+      return owned.id;
+    }
+  }
+
+  const fallback = await db.artistProfile.findFirst({
+    orderBy: { createdAt: "asc" },
+    select: { id: true },
+  });
+
+  if (!fallback) {
+    throw new Error("No artist profile exists yet. Run onboarding before importing releases.");
+  }
+
+  return fallback.id;
+}
+
 export async function persistImportedReleaseDrafts(
   sessionToken: string,
   releases: ImportedRelease[],
@@ -176,36 +235,99 @@ export async function persistImportedReleaseDrafts(
   importedFiles: string[];
   errors: string[];
 }> {
-  await fs.mkdir(inboxDir(), { recursive: true });
-
   const importedFiles: string[] = [];
   const errors: string[] = [];
 
+  const artistId = await getTargetArtistProfileId();
+
   for (const release of releases) {
     try {
-      const slug = slugify(`${release.artist_name ?? "unknown-artist"}-${release.title}`);
-      const fingerprint = crypto
-        .createHash("sha1")
-        .update(JSON.stringify(release))
-        .digest("hex")
-        .slice(0, 12);
+      const releaseDate = release.release_date ? new Date(release.release_date) : null;
+      const releaseType = inferReleaseType(release.tracks.length);
 
-      const filename = `${sessionToken}--${slug}--${fingerprint}.json`;
-      const fullPath = path.join(inboxDir(), filename);
+      const spotifyUrl = mapStoreUrl(release.stores, /spotify/i);
+      const appleMusicUrl = mapStoreUrl(release.stores, /apple|itunes/i);
+      const youtubeMusicUrl = mapStoreUrl(release.stores, /youtube/i);
 
-      const draftRecord = {
-        import_provider: "distrokid",
-        import_session_token: sessionToken,
-        imported_at: new Date().toISOString(),
-        needs_review: true,
-        release,
-      };
+      const notesParts = [
+        "Imported from DistroKid",
+        `Session: ${sessionToken}`,
+        `Source release ID: ${release.source_release_id}`,
+        release.source_url ? `Source URL: ${release.source_url}` : null,
+        release.upc ? `UPC: ${release.upc}` : null,
+        release.label_name ? `Label: ${release.label_name}` : null,
+      ].filter(Boolean);
 
-      await fs.writeFile(fullPath, JSON.stringify(draftRecord, null, 2), "utf8");
-      importedFiles.push(filename);
+      const existing = await db.release.findFirst({
+        where: {
+          artistId,
+          title: release.title,
+          releaseDate: releaseDate ?? undefined,
+        },
+        select: { id: true },
+      });
+
+      let releaseId: string;
+
+      if (existing) {
+        const updated = await db.release.update({
+          where: { id: existing.id },
+          data: {
+            releaseType,
+            distributor: "DistroKid",
+            releaseDate,
+            coverArtUrl: release.artwork_url,
+            spotifyUrl,
+            appleMusicUrl,
+            youtubeMusicUrl,
+            notes: notesParts.join("\n"),
+          },
+          select: { id: true },
+        });
+
+        releaseId = updated.id;
+
+        await db.track.deleteMany({
+          where: { releaseId },
+        });
+      } else {
+        const created = await db.release.create({
+          data: {
+            artistId,
+            title: release.title,
+            releaseType,
+            distributor: "DistroKid",
+            releaseDate,
+            coverArtUrl: release.artwork_url,
+            spotifyUrl,
+            appleMusicUrl,
+            youtubeMusicUrl,
+            notes: notesParts.join("\n"),
+          },
+          select: { id: true },
+        });
+
+        releaseId = created.id;
+      }
+
+      if (release.tracks.length) {
+        await db.track.createMany({
+          data: release.tracks.map((track, index) => ({
+            releaseId,
+            title: track.title,
+            trackNumber: track.track_number ?? index + 1,
+            isrc: track.isrc,
+            durationSeconds: parseDurationToSeconds(track.duration_text),
+            explicit: track.explicit ?? false,
+            lyrics: null,
+          })),
+        });
+      }
+
+      importedFiles.push(releaseId);
     } catch (error) {
       errors.push(
-        `Failed to persist release "${release.title}": ${error instanceof Error ? error.message : "Unknown error."}`,
+        `Failed to import "${release.title}": ${error instanceof Error ? error.message : "Unknown error."}`,
       );
     }
   }
@@ -215,12 +337,4 @@ export async function persistImportedReleaseDrafts(
     importedFiles,
     errors,
   };
-}
-
-function slugify(input: string) {
-  return input
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "")
-    .slice(0, 80);
 }

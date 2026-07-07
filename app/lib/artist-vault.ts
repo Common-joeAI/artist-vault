@@ -25,7 +25,7 @@ async function getScopedReleaseWhere(releaseId: string) {
   return { id: releaseId };
 }
 
-export async function getPrimaryArtistProfile() {
+export async function getPrimaryArtistProfile(_userId?: string) {
   return db.artistProfile.findFirst({
     where: await getScopedProfileWhere(),
     include: {
@@ -70,13 +70,13 @@ export async function getReleaseById(releaseId: string) {
 
 export function formatDisplayDate(value: Date | string | null | undefined) {
   if (!value) {
-    return "—";
+    return " - ";
   }
 
   const date = value instanceof Date ? value : new Date(value);
 
   if (Number.isNaN(date.getTime())) {
-    return "—";
+    return " - ";
   }
 
   return new Intl.DateTimeFormat("en-US", {

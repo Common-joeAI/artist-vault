@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
   title: {
-    default: "AIArtistVault — Release Ops, Rights & Press Kit Vault for AI Music Artists",
+    default: "AIArtistVault  -  Release Ops, Rights & Press Kit Vault for AI Music Artists",
     template: "%s · AIArtistVault",
   },
   description:

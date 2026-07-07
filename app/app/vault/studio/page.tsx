@@ -54,9 +54,7 @@ export default function StudioPage() {
           <Link className={styles.button} href="/vault/releases">
             Catalog index
           </Link>
-          <Link className={styles.buttonSecondary} href="/vault/phase-4">
-            Workspace hub
-          </Link>
+
         </div>
       </section>
 

@@ -3,7 +3,7 @@ import { requireSession } from "@/lib/auth";
 import { RadioProfileForm } from "@/components/radio/radio-profile-form";
 
 export const metadata = {
-  title: "Complete Your Radio Profile — Artist Vault",
+  title: "Complete Your Radio Profile  -  Artist Vault",
 };
 
 export default async function RadioProfilePage() {
@@ -21,7 +21,7 @@ export default async function RadioProfilePage() {
           📻 Set up your radio station profile
         </h1>
         <p style={{ color: "#aab3c2", marginBottom: "2rem" }}>
-          Tell us about your station so artists know who you are — and so we can
+          Tell us about your station so artists know who you are  -  and so we can
           match you with music that fits your format.
         </p>
         <RadioProfileForm userId={session.userId} />

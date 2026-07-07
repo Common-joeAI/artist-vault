@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import styles from "../radio.module.css";
 
 export const metadata = {
-  title: "Radio Dashboard — Artist Vault",
+  title: "Radio Dashboard  -  Artist Vault",
 };
 
 export default async function RadioDashboardPage() {

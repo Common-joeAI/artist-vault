@@ -109,7 +109,7 @@ export default function DistroKidImportClient() {
           <p className="mt-3 max-w-3xl text-sm text-white/70">
             Use a browser extension to read release pages from a DistroKid session that the user has already
             signed into. The extension pushes normalized release metadata into Artist Vault without storing
-            the user&apos;s DistroKid password.
+            the user's DistroKid password.
           </p>
         </div>
 

@@ -51,7 +51,7 @@ export async function checkReleaseReadyStatus(releaseId: string): Promise<Releas
   const coverArtUploaded = Boolean(release.coverArtUrl);
   if (!coverArtUploaded) missingItems.push("Upload cover art");
 
-  // Check PRO registration — any track needs proStatus APPROVED
+  // Check PRO registration  -  any track needs proStatus APPROVED
   // (or legacy ascapStatus/bmiStatus APPROVED)
   const proRegistered = release.tracks.length === 0
     ? false
@@ -204,8 +204,8 @@ async function sendRadioNotificationEmail(notification: {
     .map((t, i) => {
       const dur = t.durationSeconds
         ? `${Math.floor(t.durationSeconds / 60)}:${String(t.durationSeconds % 60).padStart(2, "0")}`
-        : "—";
-      return `${i + 1}. ${t.title} (${dur})${t.isrc ? ` — ISRC: ${t.isrc}` : ""}`;
+        : " - ";
+      return `${i + 1}. ${t.title} (${dur})${t.isrc ? `  -  ISRC: ${t.isrc}` : ""}`;
     })
     .join("\n");
 
@@ -227,7 +227,7 @@ This release has been verified: master files uploaded, cover art complete, and P
 
 Visit aiartistvault.com to access the full press kit and download materials.
 
-—
+ - 
 AI Artist Vault
 aiartistvault.com`;
 

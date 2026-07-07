@@ -16,6 +16,9 @@ type WizardValues = {
   youtubeMusicUrl: string;
   websiteUrl: string;
   otherUrl: string;
+  proOrg: "ASCAP" | "BMI" | "SESAC" | "";
+  proMemberId?: string;
+  producerIpiNumber?: string;
 };
 
 type WizardProps = {
@@ -32,6 +35,10 @@ const steps = [
     description: "Store the public pages used for listeners, import flows, and press materials.",
   },
   {
+    title: "PRO Membership",
+    description: "Select your Performance Rights Organization. You can only belong to one — choose ASCAP, BMI, or SESAC.",
+  },
+  {
     title: "Review",
     description: "Confirm your profile snapshot, then save the onboarding record.",
   },
@@ -45,7 +52,7 @@ export function OnboardingWizard({ defaultValues }: WizardProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const saveTargetRef = useRef<"vault" | "release">("vault");
 
-  const { register, handleSubmit, watch } = useForm<WizardValues>({
+  const { register, handleSubmit, watch, setValue } = useForm<WizardValues>({
     defaultValues,
   });
 
@@ -96,6 +103,7 @@ export function OnboardingWizard({ defaultValues }: WizardProps) {
       </div>
 
       <form className={styles.form} onSubmit={submit}>
+        {/* Step 0 — Artist profile */}
         {stepIndex === 0 ? (
           <>
             <div className={styles.columns2}>
@@ -132,6 +140,7 @@ export function OnboardingWizard({ defaultValues }: WizardProps) {
           </>
         ) : null}
 
+        {/* Step 1 — Artist links */}
         {stepIndex === 1 ? (
           <>
             <div className={styles.columns2}>
@@ -163,17 +172,94 @@ export function OnboardingWizard({ defaultValues }: WizardProps) {
           </>
         ) : null}
 
+        {/* Step 2 — PRO Membership */}
         {stepIndex === 2 ? (
+          <div className={styles.proStep}>
+            <p className={styles.muted} style={{ marginBottom: "1rem" }}>
+              Performance Rights Organizations (PROs) collect royalties when your music is played publicly — on radio, streaming, TV, and live venues.
+              You can only be a member of <strong>one</strong> PRO. If you are already registered, select yours below. If not, you can sign up after completing onboarding.
+            </p>
+
+            <div className={styles.proCards}>
+              {(["ASCAP", "BMI", "SESAC", ""] as const).map((org) => (
+                <button
+                  key={org || "none"}
+                  type="button"
+                  className={`${styles.proCard} ${values.proOrg === org ? styles.proCardActive : ""}`}
+                  onClick={() => setValue("proOrg", org)}
+                >
+                  <strong>{org || "None / Not yet"}</strong>
+                  <div className={styles.muted}>
+                    {org === "ASCAP" && "American Society of Composers, Authors and Publishers"}
+                    {org === "BMI" && "Broadcast Music, Inc."}
+                    {org === "SESAC" && "Society of European Stage Authors and Composers"}
+                    {org === "" && "Skip for now — you can update this later in PRO Registration."}
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <input type="hidden" {...register("proOrg")} />
+
+            {values.proOrg ? (
+              <div style={{ marginTop: "1rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                <div className={styles.field}>
+                  <label htmlFor="proMemberId">
+                    {values.proOrg === "ASCAP" ? "ASCAP Member ID" : values.proOrg === "BMI" ? "BMI Member ID" : "SESAC Member ID"}
+                    <span style={{ fontWeight: 400, color: "var(--muted, #888)", marginLeft: "0.4rem" }}>(required)</span>
+                  </label>
+                  <input
+                    id="proMemberId"
+                    {...register("proMemberId")}
+                    placeholder={values.proOrg === "ASCAP" ? "e.g. 123456789" : values.proOrg === "SESAC" ? "e.g. 000123456" : "e.g. 987654321"}
+                  />
+                  <div className={styles.muted} style={{ marginTop: "0.25rem" }}>
+                    {values.proOrg === "ASCAP" && (
+                      <>Find yours at <a href="https://www.ascap.com/membership/joining-ascap" target="_blank" rel="noopener noreferrer">ascap.com</a> under your member account.</>
+                    )}
+                    {values.proOrg === "BMI" && (
+                      <>Find yours at <a href="https://www.bmi.com/creators" target="_blank" rel="noopener noreferrer">bmi.com</a> in your publisher/creator portal.</>
+                    )}
+                    {values.proOrg === "SESAC" && (
+                      <>Find yours at <a href="https://www.sesac.com" target="_blank" rel="noopener noreferrer">sesac.com</a> in your member portal.</>
+                    )}
+                  </div>
+                </div>
+
+                <div className={styles.field}>
+                  <label htmlFor="producerIpiNumber">
+                    Producer IPI / CAE Number
+                    <span style={{ fontWeight: 400, color: "var(--muted, #888)", marginLeft: "0.4rem" }}>(optional)</span>
+                  </label>
+                  <input
+                    id="producerIpiNumber"
+                    {...register("producerIpiNumber")}
+                    placeholder="e.g. 00123456789"
+                  />
+                  <div className={styles.muted} style={{ marginTop: "0.25rem" }}>
+                    Your IPI number identifies you as a music rights holder internationally. Used on track registrations.
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        {/* Step 3 — Review */}
+        {stepIndex === 3 ? (
           <div className={styles.summary}>
             <strong>Review before saving</strong>
-            <div className={styles.muted}>Name: {values.name || "—"}</div>
-            <div className={styles.muted}>Bio: {values.bio || "—"}</div>
-            <div className={styles.muted}>Photo URL: {values.photoUrl || "—"}</div>
-            <div className={styles.muted}>Spotify: {values.spotifyUrl || "—"}</div>
-            <div className={styles.muted}>Apple Music: {values.appleMusicUrl || "—"}</div>
-            <div className={styles.muted}>YouTube Music: {values.youtubeMusicUrl || "—"}</div>
-            <div className={styles.muted}>Website: {values.websiteUrl || "—"}</div>
-            <div className={styles.muted}>Other: {values.otherUrl || "—"}</div>
+            <div className={styles.muted}>Name: {values.name || " - "}</div>
+            <div className={styles.muted}>Bio: {values.bio || " - "}</div>
+            <div className={styles.muted}>Photo URL: {values.photoUrl || " - "}</div>
+            <div className={styles.muted}>Spotify: {values.spotifyUrl || " - "}</div>
+            <div className={styles.muted}>Apple Music: {values.appleMusicUrl || " - "}</div>
+            <div className={styles.muted}>YouTube Music: {values.youtubeMusicUrl || " - "}</div>
+            <div className={styles.muted}>Website: {values.websiteUrl || " - "}</div>
+            <div className={styles.muted}>Other: {values.otherUrl || " - "}</div>
+            <div className={styles.muted}>PRO: {values.proOrg || "None selected"}</div>
+            {values.proMemberId ? <div className={styles.muted}>Member ID: {values.proMemberId}</div> : null}
+            {values.producerIpiNumber ? <div className={styles.muted}>Producer IPI: {values.producerIpiNumber}</div> : null}
             <div className={styles.muted} style={{ marginTop: "0.75rem" }}>
               Save to the vault, or save and jump straight into adding the first release.
             </div>

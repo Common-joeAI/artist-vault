@@ -26,12 +26,12 @@ const DISTRIBUTORS: Distributor[] = [
     color: "#00b4d8",
     tier: 1,
     csvPath: [
-      "Log in to distrokid.com",
-      "Go to your Artist page → click your artist name",
-      "Scroll down → click \"Download a spreadsheet of your songs\"",
-      "A .xlsx or .csv file will download automatically",
+      "Click \"Start DistroKid import\"  -  a session token is generated & copied",
+      "Click \"Download connector\"  -  unzip, then load in Chrome (Developer Mode → Load Unpacked)",
+      "Open DistroKid in the same browser  -  the connector runs automatically",
+      "Your releases push directly into your vault",
     ],
-    csvNote: "DistroKid exports an Excel file — save it as CSV before uploading.",
+    csvNote: "Uses a browser connector (not CSV). Install once  -  imports run in seconds.",
     columns: ["Song Name", "Album", "UPC", "ISRC", "Release Date", "Stores"],
     importPath: "/vault/import/distrokid",
   },
@@ -48,8 +48,9 @@ const DISTRIBUTORS: Distributor[] = [
       "Look for an Export or Download icon (top right of table)",
       "Select \"Export as CSV\"",
     ],
-    csvNote: "SoundOn's export feature may be limited — if unavailable, use the manual import option below.",
+    csvNote: "SoundOn's export feature may be limited  -  if unavailable, use the manual import option below.",
     columns: ["Track Name", "Release Name", "UPC", "ISRC", "Release Date", "Status"],
+    importPath: "/vault/import/csv/soundon",
   },
   {
     id: "tunecore",
@@ -64,6 +65,7 @@ const DISTRIBUTORS: Distributor[] = [
       "Choose \"Export All Releases as CSV\"",
     ],
     columns: ["Title", "Artist", "UPC", "ISRC", "Release Date", "Stores", "Type"],
+    importPath: "/vault/import/csv/tunecore",
   },
   {
     id: "cdbaby",
@@ -78,6 +80,7 @@ const DISTRIBUTORS: Distributor[] = [
       "Select CSV format and download",
     ],
     columns: ["Title", "Artist", "UPC", "ISRC", "Release Date", "Genre", "Label"],
+    importPath: "/vault/import/csv/cdbaby",
   },
   {
     id: "amuse",
@@ -93,6 +96,7 @@ const DISTRIBUTORS: Distributor[] = [
     ],
     csvNote: "Amuse exports per-release. Download one per release and import separately.",
     columns: ["Title", "UPC", "ISRC", "Release Date", "Status", "Stores"],
+    importPath: "/vault/import/csv/amuse",
   },
   {
     id: "unitedmasters",
@@ -107,6 +111,7 @@ const DISTRIBUTORS: Distributor[] = [
       "Download as CSV",
     ],
     columns: ["Track Title", "Album", "UPC", "ISRC", "Release Date"],
+    importPath: "/vault/import/csv/unitedmasters",
   },
   {
     id: "onerpm",
@@ -121,6 +126,7 @@ const DISTRIBUTORS: Distributor[] = [
       "Download CSV",
     ],
     columns: ["Title", "Artist", "UPC", "ISRC", "Release Date", "Territory"],
+    importPath: "/vault/import/csv/onerpm",
   },
   {
     id: "symphonic",
@@ -135,12 +141,13 @@ const DISTRIBUTORS: Distributor[] = [
       "Download CSV",
     ],
     columns: ["Release Title", "Artist", "UPC", "ISRC", "Release Date", "Label"],
+    importPath: "/vault/import/csv/symphonic",
   },
 ];
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const s = {
+const s: Record<string, any> = {
   page: {
     maxWidth: 860,
     margin: "0 auto",
@@ -334,7 +341,7 @@ export default function ImportPage() {
     <div style={s.page}>
       <h1 style={s.heading}>📥 Import Music</h1>
       <p style={s.sub}>
-        Import your catalog from any major distributor. Download your CSV export and upload it here — we'll do the rest.
+        Import your catalog from any major distributor. DistroKid uses a browser connector  -  all others use CSV export.
       </p>
 
       {/* Tier 1 */}
@@ -409,7 +416,7 @@ export default function ImportPage() {
         <div style={s.btnRow}>
           {dist.importPath ? (
             <a href={dist.importPath} style={s.primaryBtn(dist.color)}>
-              ⬆️ Upload {dist.name} CSV
+              {dist.id === 'distrokid' ? '🔌 Open DistroKid Importer' : '⬆️ Upload ' + dist.name + ' CSV'}
             </a>
           ) : (
             <div style={s.comingSoon}>

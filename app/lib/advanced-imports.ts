@@ -29,7 +29,7 @@ function cleanTitle(value: string, platform: string) {
   }
 
   title = title.replace(/^Listen to\s+/i, "");
-  title = title.replace(/\s+[–-]\s+Single$/i, "");
+  title = title.replace(/\s+[--]\s+Single$/i, "");
 
   return title.trim();
 }

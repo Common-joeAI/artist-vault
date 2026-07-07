@@ -14,7 +14,7 @@ type Artist = {
   dna?: { topGenres?:string; topMoods?:string; topTools?:string; energyProfile?:string; summary?:string; soundsLike?:string; };
 };
 
-const s: Record<string, React.CSSProperties> = {
+const s: Record<string, any> = {
   page: { minHeight:'100vh', background:'#0a0a0f', color:'#fff', fontFamily:'system-ui,sans-serif' },
   hero: { background:'linear-gradient(180deg,rgba(124,58,237,0.2) 0%,transparent 100%)', padding:'4rem 1rem 2rem', textAlign:'center' as const },
   h1: { fontSize:'2.2rem', fontWeight:900, marginBottom:8 },

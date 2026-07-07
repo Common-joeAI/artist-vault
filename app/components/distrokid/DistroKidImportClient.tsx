@@ -67,7 +67,7 @@ function pickArrayCount(record: JsonRecord, keys: string[]): number {
 }
 
 function formatDate(value: string): string {
-  if (!value) return "—";
+  if (!value) return "-";
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return value;
   return parsed.toLocaleString();
@@ -77,7 +77,7 @@ export function DistroKidImportClient() {
   const [sessionToken, setSessionToken] = useState("");
   const [activeToken, setActiveToken] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
-  const [vaultOrigin, setVaultOrigin] = useState("https://www.aiartistvault.com");
+  const [vaultOrigin, setVaultOrigin] = useState("https://aiartistvault.com");
   const [status, setStatus] = useState<JsonRecord | null>(null);
   const [statusText, setStatusText] = useState("Waiting to start.");
   const [busy, setBusy] = useState(false);
@@ -153,7 +153,7 @@ export function DistroKidImportClient() {
 
   async function startImport() {
     setBusy(true);
-    setStatusText("Preparing import…");
+    setStatusText("Preparing import...");
 
     try {
       const response = await fetch("/api/import/distrokid/session", {
@@ -245,9 +245,37 @@ export function DistroKidImportClient() {
         </div>
         <h2 style={{ margin: "8px 0 6px" }}>Import your DistroKid releases</h2>
         <p style={{ margin: 0, opacity: 0.85, maxWidth: 820 }}>
-          Start an import, download the connector, then open DistroKid and run the import from the connector.
-          The token is copied automatically when you start.
+          Uses a small browser connector (not CSV). Install it once in Chrome or Edge - imports run in seconds after that.
         </p>
+      </div>
+
+      {/* How it works - always visible guide */}
+      <div style={{ ...cardStyle, background: "rgba(124,58,237,0.08)", borderColor: "rgba(124,58,237,0.35)" }}>
+        <div style={{ fontSize: 12, opacity: 0.7, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>
+          How it works - one-time setup
+        </div>
+        <div style={{ display: "grid", gap: 14 }}>
+          {[
+            { n: 1, title: "Generate a token", body: "Click the Start DistroKid Import button below. This creates a short-lived session token that is auto-copied to your clipboard." },
+            { n: 2, title: "Download the connector", body: "Click Download Connector to get a .zip file. Unzip it to get a folder called artist-vault-connector." },
+            { n: 3, title: "Load it in Chrome or Edge", body: "Open chrome://extensions or edge://extensions, enable Developer Mode, click Load Unpacked, then select the artist-vault-connector folder." },
+            { n: 4, title: "Open DistroKid", body: "Go to distrokid.com and sign in. The connector icon appears in your browser toolbar. Click it, paste your token if prompted, and hit Import." },
+            { n: 5, title: "Done - check status below", body: "Your releases push directly into your vault. The status panel below updates in real time." },
+          ].map(({ n, title, body }) => (
+            <div key={n} style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+              <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#7c3aed", color: "#fff", fontWeight: 800, fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
+                {n}
+              </div>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 3 }}>{title}</div>
+                <div style={{ fontSize: 13, opacity: 0.82, lineHeight: 1.5 }}>{body}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{ marginTop: 16, padding: "10px 14px", background: "rgba(0,0,0,0.2)", borderRadius: 10, fontSize: 12, opacity: 0.75 }}>
+          TIP: <strong>Already installed the connector?</strong> Just click "Start DistroKid import", open DistroKid, and the connector will handle the rest automatically.
+        </div>
       </div>
 
       <div
@@ -264,7 +292,7 @@ export function DistroKidImportClient() {
             Generate a short-lived token for your import session.
           </p>
           <button type="button" onClick={startImport} disabled={busy} style={primaryButton}>
-            {busy ? "Starting…" : "Start DistroKid import"}
+            {busy ? "Starting..." : "Start DistroKid import"}
           </button>
           <div style={{ marginTop: 10, fontSize: 13, opacity: 0.75 }}>
             {activeToken ? "Token ready and copied." : "No active token yet."}

@@ -216,14 +216,14 @@ export function EnhanceMetadataPanel({ trackId, existingAudioUrl, existing }: Pr
       {result ? (
         <>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16 }}>
-            <DiffCard label="Title" before={existing.title ?? "—"} after={result.normalizedMetadata.title ?? "—"} />
-            <DiffCard label="Artist" before={existing.artist ?? "—"} after={result.normalizedMetadata.artist ?? "—"} />
-            <DiffCard label="Album" before={existing.album ?? "—"} after={result.normalizedMetadata.album ?? "—"} />
-            <DiffCard label="ISRC" before={existing.isrc ?? "—"} after={result.normalizedMetadata.isrc ?? "—"} />
-            <DiffCard label="UPC" before={existing.upc ?? "—"} after={result.normalizedMetadata.upc ?? "—"} />
+            <DiffCard label="Title" before={existing.title ?? " - "} after={result.normalizedMetadata.title ?? " - "} />
+            <DiffCard label="Artist" before={existing.artist ?? " - "} after={result.normalizedMetadata.artist ?? " - "} />
+            <DiffCard label="Album" before={existing.album ?? " - "} after={result.normalizedMetadata.album ?? " - "} />
+            <DiffCard label="ISRC" before={existing.isrc ?? " - "} after={result.normalizedMetadata.isrc ?? " - "} />
+            <DiffCard label="UPC" before={existing.upc ?? " - "} after={result.normalizedMetadata.upc ?? " - "} />
             <DiffCard
               label="Distribution"
-              before="—"
+              before=" - "
               after={
                 result.normalizedMetadata.distributionStatusText ??
                 (result.normalizedMetadata.distributionKnown ? "Known" : "Unknown")

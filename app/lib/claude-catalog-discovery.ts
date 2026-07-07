@@ -58,7 +58,7 @@ export type SiteSnapshot = {
   error?: string;
 };
 
-// Lines that are clearly streaming UI chrome — not real release titles
+// Lines that are clearly streaming UI chrome  -  not real release titles
 const UI_NOISE_PATTERNS: RegExp[] = [
   /^view all (songs?|voices?|playlists?|albums?|tracks?|videos?)$/i,
   /^play .{0,80}$/i,
@@ -79,13 +79,16 @@ function isUiNoise(line: string): boolean {
 }
 
 function denoisePageText(raw: string): string {
-  return raw
-    .split(/[
-|]+/)
-    .map(l => l.trim())
-    .filter(l => l.length > 1 && !isUiNoise(l))
-    .slice(0, 600)
-    .join(' | ');
+  const out: string[] = [];
+  const segs = raw.split("|");
+  for (let s = 0; s < segs.length; s++) {
+    const nlines = segs[s].split(String.fromCharCode(10));
+    for (let n = 0; n < nlines.length; n++) {
+      const t = nlines[n].split(String.fromCharCode(13)).join("").trim();
+      if (t.length > 1 && !isUiNoise(t)) out.push(t);
+    }
+  }
+  return out.slice(0, 600).join(" | ");
 }
 
 function cleanText(value: string) {

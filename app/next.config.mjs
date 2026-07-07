@@ -16,6 +16,25 @@ const nextConfig = {
         source: "/:path*",
         headers: securityHeaders,
       },
+      // Allow audio files to stream correctly
+      {
+        source: "/uploads/:path*.mp3",
+        headers: [
+          { key: "Content-Type", value: "audio/mpeg" },
+          { key: "Accept-Ranges", value: "bytes" },
+          { key: "Cache-Control", value: "public, max-age=86400" },
+          { key: "Cross-Origin-Resource-Policy", value: "cross-origin" },
+        ],
+      },
+      {
+        source: "/uploads/:path*.m4a",
+        headers: [
+          { key: "Content-Type", value: "audio/mp4" },
+          { key: "Accept-Ranges", value: "bytes" },
+          { key: "Cache-Control", value: "public, max-age=86400" },
+          { key: "Cross-Origin-Resource-Policy", value: "cross-origin" },
+        ],
+      },
     ];
   },
 };

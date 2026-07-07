@@ -9,8 +9,9 @@ function parseJson<T>(s: string | null | undefined): T[] {
 const TOOL_EMOJI: Record<string,string> = { suno:'🎵', udio:'🎶', musicfy:'🎤', aimusicgen:'🤖', loudly:'🔊', beatoven:'🥁', boomy:'💥', other:'✨' };
 const ENERGY_COLOR: Record<string,string> = { low:'#60a5fa', medium:'#34d399', high:'#f87171' };
 
-export default async function ArtistPublicPage({ params }: { params: { slug: string } }) {
-  const artist = await db.artistProfile.findUnique({ where: { slug: params.slug }, include: { links: true } });
+export default async function ArtistPublicPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const artist = await db.artistProfile.findUnique({ where: { slug }, include: { links: true } });
   if (!artist || !artist.isPublic) notFound();
 
   const dna = await db.styleDna.findUnique({ where: { artistId: artist.id } });
@@ -20,11 +21,9 @@ export default async function ArtistPublicPage({ params }: { params: { slug: str
   const moods = parseJson<string>(dna?.topMoods);
   const tools = parseJson<string>(dna?.topTools);
   const soundsLike = parseJson<string>(dna?.soundsLike);
-  const tags = parseJson<string>(dna?.tags);
 
   return (
     <div style={{ minHeight:'100vh', background:'#0a0a0f', color:'#fff', fontFamily:'system-ui,sans-serif' }}>
-      {/* Hero */}
       <div style={{ background:'linear-gradient(180deg,rgba(124,58,237,0.15) 0%,transparent 100%)', padding:'4rem 1rem 2rem', textAlign:'center' }}>
         {artist.photoUrl && <img src={artist.photoUrl} alt={artist.name} style={{ width:100, height:100, borderRadius:'50%', objectFit:'cover', border:'3px solid #7c3aed', marginBottom:16 }} />}
         <h1 style={{ fontSize:'2.2rem', fontWeight:900, margin:'0 0 8px' }}>{artist.name}</h1>
@@ -38,7 +37,6 @@ export default async function ArtistPublicPage({ params }: { params: { slug: str
       </div>
 
       <div style={{ maxWidth:820, margin:'0 auto', padding:'0 1rem 4rem' }}>
-        {/* Style DNA */}
         {dna && (
           <div style={{ border:'1px solid rgba(124,58,237,0.3)', borderRadius:16, padding:'1.5rem', background:'rgba(124,58,237,0.05)', marginBottom:'1.5rem' }}>
             <div style={{ fontWeight:800, fontSize:'1.1rem', marginBottom:12 }}>🧬 Style DNA</div>
@@ -62,7 +60,6 @@ export default async function ArtistPublicPage({ params }: { params: { slug: str
           </div>
         )}
 
-        {/* Releases */}
         {releases.length > 0 && (
           <div style={{ marginBottom:'1.5rem' }}>
             <div style={{ fontWeight:800, fontSize:'1.1rem', marginBottom:12 }}>🎵 Releases</div>
@@ -74,8 +71,8 @@ export default async function ArtistPublicPage({ params }: { params: { slug: str
                     <div style={{ fontSize:'0.78rem', color:'#6b7280' }}>{r.releaseType} {r.releaseDate ? '· ' + new Date(r.releaseDate).getFullYear() : ''}</div>
                   </div>
                   <div style={{ display:'flex', gap:8 }}>
-                    {r.spotifyUrl && <a href={r.spotifyUrl} target="_blank" style={{ color:'#1db954', fontSize:'0.8rem', fontWeight:700 }}>Spotify ↗</a>}
-                    {r.appleMusicUrl && <a href={r.appleMusicUrl} target="_blank" style={{ color:'#fc3c44', fontSize:'0.8rem', fontWeight:700 }}>Apple ↗</a>}
+                    {r.spotifyUrl && <a href={r.spotifyUrl} target='_blank' style={{ color:'#1db954', fontSize:'0.8rem', fontWeight:700 }}>Spotify ↗</a>}
+                    {r.appleMusicUrl && <a href={r.appleMusicUrl} target='_blank' style={{ color:'#fc3c44', fontSize:'0.8rem', fontWeight:700 }}>Apple ↗</a>}
                   </div>
                 </div>
               ))}
@@ -83,11 +80,10 @@ export default async function ArtistPublicPage({ params }: { params: { slug: str
           </div>
         )}
 
-        {/* Links */}
         {artist.links.length > 0 && (
           <div style={{ display:'flex', gap:10, flexWrap:'wrap', justifyContent:'center' }}>
             {artist.links.map(l => (
-              <a key={l.id} href={l.url} target="_blank" style={{ border:'1px solid rgba(255,255,255,0.15)', borderRadius:10, padding:'8px 20px', color:'#d1d5db', fontWeight:600, fontSize:'0.85rem', textDecoration:'none' }}>
+              <a key={l.id} href={l.url} target='_blank' style={{ border:'1px solid rgba(255,255,255,0.15)', borderRadius:10, padding:'8px 20px', color:'#d1d5db', fontWeight:600, fontSize:'0.85rem', textDecoration:'none' }}>
                 {l.label || l.platform} ↗
               </a>
             ))}
@@ -95,7 +91,7 @@ export default async function ArtistPublicPage({ params }: { params: { slug: str
         )}
 
         <div style={{ textAlign:'center', marginTop:'3rem', fontSize:'0.78rem', color:'#4b5563' }}>
-          Powered by <a href="https://aiartistvault.com" style={{ color:'#7c3aed' }}>AI Artist Vault</a>
+          Powered by <a href='https://aiartistvault.com' style={{ color:'#7c3aed' }}>AI Artist Vault</a>
         </div>
       </div>
     </div>

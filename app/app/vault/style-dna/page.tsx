@@ -15,7 +15,7 @@ function parseJson<T>(s: string|undefined): T[] {
   try { return JSON.parse(s); } catch { return []; }
 }
 
-const s: Record<string, React.CSSProperties> = {
+const s: Record<string, any> = {
   page: { maxWidth: 860, margin: '0 auto', padding: '2rem 1rem' },
   h1: { fontSize: '1.6rem', fontWeight: 800, margin: 0 },
   sub: { color: '#9ca3af', marginTop: '0.4rem', marginBottom: '2rem' },
@@ -87,7 +87,7 @@ export default function StyleDnaPage() {
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'0.4rem' }}>
         <div>
           <h1 style={s.h1}>🧬 Style DNA</h1>
-          <p style={s.sub}>Your sonic fingerprint — auto-generated from your vault, releases, and prompts.</p>
+          <p style={s.sub}>Your sonic fingerprint  -  auto-generated from your vault, releases, and prompts.</p>
         </div>
         <button style={s.computeBtn} onClick={compute} disabled={computing}>
           {computing ? '🔬 Analyzing...' : dna ? '🔄 Recompute' : '🧬 Generate My DNA'}

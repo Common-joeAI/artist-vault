@@ -127,3 +127,35 @@
   gap: 0.75rem;
   flex-wrap: wrap;
 }
+
+.proStep {
+  display: flex;
+  flex-direction: column;
+}
+
+.proCards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.proCard {
+  background: var(--surface, #1a1a2e);
+  border: 2px solid var(--border, #2a2a4a);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  color: inherit;
+  font-family: inherit;
+}
+
+.proCard:hover {
+  border-color: var(--accent, #7c3aed);
+}
+
+.proCardActive {
+  border-color: var(--accent, #7c3aed);
+  background: rgba(124, 58, 237, 0.12);
+}

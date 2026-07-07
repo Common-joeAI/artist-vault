@@ -3,6 +3,13 @@ import { SiteFooter } from "@/components/marketing/site-footer";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { getSession } from "@/lib/auth";
 
+
+// ── AI-generated artwork ───────────────────────────────────────────────────
+const HERO_BG      = 'https://media.base44.com/images/public/69ed2b61466f8deda9b91d49/60d82475a_generated_image.png';
+const IMG_VAULT    = 'https://media.base44.com/images/public/69ed2b61466f8deda9b91d49/4db0c5eb1_generated_image.png';
+const IMG_DISCOVER = 'https://media.base44.com/images/public/69ed2b61466f8deda9b91d49/2e8d5a396_generated_image.png';
+const IMG_PRESSKIT = 'https://media.base44.com/images/public/69ed2b61466f8deda9b91d49/bfad5a472_generated_image.png';
+
 // ── PATHOS: Speak to real artist pain ──────────────────────────────────────
 const painPoints = [
   { icon: "📂", text: "Release notes buried in 6 different Google Docs" },
@@ -15,29 +22,32 @@ const painPoints = [
 const pillars = [
   {
     icon: "🎛️",
+    img: IMG_VAULT,
     title: "Release Command Center",
-    body: "One workspace for every single, EP, and album — cover art, release date, DSP links, rollout notes, and track metadata. Nothing falls through the cracks.",
-    proof: "Replaces 4–6 scattered tools",
+    body: "One workspace for every single, EP, and album  -  cover art, release date, DSP links, rollout notes, and track metadata. Nothing falls through the cracks.",
+    proof: "Replaces 4-6 scattered tools",
   },
   {
     icon: "⚖️",
+    img: IMG_PRESSKIT,
     title: "Rights & Registrations",
-    body: "Track ISRCs, lyrics, writer splits, and PRO registration status (ASCAP/BMI) across every track — so you own what you created and can prove it.",
+    body: "Track ISRCs, lyrics, writer splits, and PRO registration status (ASCAP/BMI) across every track  -  so you own what you created and can prove it.",
     proof: "Built-in ISRC + split tracking",
   },
   {
     icon: "🗂️",
+    img: IMG_DISCOVER,
     title: "Press Kit Engine",
-    body: "Your artist bio, release data, and hero images sync into a clean, shareable press kit — no copy-paste, no rebuilding from scratch every time you pitch.",
+    body: "Your artist bio, release data, and hero images sync into a clean, shareable press kit  -  no copy-paste, no rebuilding from scratch every time you pitch.",
     proof: "One source → infinite pitches",
   },
 ];
 
 // ── LOGOS: Detailed how-it-works steps ────────────────────────────────────
 const timeline = [
-  { step: "01", title: "Create your vault", detail: "Sign up free. Your vault is private by default — no public profile until you're ready." },
+  { step: "01", title: "Create your vault", detail: "Sign up free. Your vault is private by default  -  no public profile until you're ready." },
   { step: "02", title: "Build your artist profile", detail: "Add your bio, links, and streaming profiles once. Everything else inherits from here." },
-  { step: "03", title: "Add your catalog", detail: "Import from DistroKid or SoundOn, or build release records from scratch — tracks, metadata, art, all of it." },
+  { step: "03", title: "Add your catalog", detail: "Import from DistroKid or SoundOn, or build release records from scratch  -  tracks, metadata, art, all of it." },
   { step: "04", title: "Lock down your rights", detail: "Assign ISRCs, writers, splits, and PRO status per track. Know exactly where every right stands." },
   { step: "05", title: "Launch with confidence", detail: "Generate your press kit and go. Your next release ships with everything already in order." },
 ];
@@ -52,7 +62,7 @@ const proofPoints = [
 const faqs = [
   {
     question: "Is this only for AI-generated music?",
-    answer: "No — it's for anyone making music independently. AI artists, bedroom producers, indie self-releasers, small labels. If you're releasing music without a major label ops team, this is for you.",
+    answer: "No  -  it's for anyone making music independently. AI artists, bedroom producers, indie self-releasers, small labels. If you're releasing music without a major label ops team, this is for you.",
   },
   {
     question: "Will this replace my distributor?",
@@ -60,11 +70,11 @@ const faqs = [
   },
   {
     question: "Do I need a paid plan to start?",
-    answer: "Nope. Free vault gets you in the door — catalog tracking, one artist profile, basic press kit tools. Upgrade when you're ready for more.",
+    answer: "Nope. Free vault gets you in the door  -  catalog tracking, one artist profile, basic press kit tools. Upgrade when you're ready for more.",
   },
   {
     question: "Is my music data private?",
-    answer: "Yes. Everything in your vault is private by default. The only things that go public are what you deliberately publish — like a shared press kit page.",
+    answer: "Yes. Everything in your vault is private by default. The only things that go public are what you deliberately publish  -  like a shared press kit page.",
   },
   {
     question: "Can I import my existing releases?",
@@ -83,9 +93,10 @@ export default async function HomePage() {
 
       <main>
 
-        {/* ── HERO — Pathos lead, Logos support ── */}
-        <section className="hero-section">
-          <div className="container hero-grid">
+        {/* ── HERO  -  Pathos lead, Logos support ── */}
+        <section className="hero-section" style={{ backgroundImage: `url(${HERO_BG})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat", position: "relative" }}>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(10,10,15,0.72)", zIndex: 0 }} />
+          <div className="container hero-grid" style={{ position: "relative", zIndex: 1 }}>
             <div className="hero-copy">
               <div className="badge">✦ Built for AI artists, indie labels &amp; serious self-releasers</div>
 
@@ -182,15 +193,15 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* ── PATHOS — The pain section ── */}
+        {/* ── PATHOS  -  The pain section ── */}
         <section className="container marketing-section">
           <div className="section-heading fade-up">
             <div className="eyebrow">Sound familiar?</div>
-            <h2>You&apos;re releasing music. Your ops are a mess.</h2>
+            <h2>You're releasing music. Your ops are a mess.</h2>
             <p className="section-copy">
               Most independent artists are running release operations across a dozen
-              half-finished systems. It works — until it doesn&apos;t. A missed ISRC,
-              an outdated bio sent to a playlist curator, rights you can&apos;t prove.
+              half-finished systems. It works  -  until it doesn't. A missed ISRC,
+              an outdated bio sent to a playlist curator, rights you can't prove.
               Those mistakes cost you.
             </p>
           </div>
@@ -214,13 +225,13 @@ export default async function HomePage() {
 
         <div className="glow-divider" />
 
-        {/* ── LOGOS — Features with proof ── */}
+        {/* ── LOGOS  -  Features with proof ── */}
         <section className="container marketing-section" id="features">
           <div className="section-heading fade-up">
             <div className="eyebrow">Core platform features</div>
             <h2>Everything your release ops actually need.</h2>
             <p className="section-copy">
-              Built around how independent artists actually work — not how labels do it,
+              Built around how independent artists actually work  -  not how labels do it,
               not how spreadsheet evangelists think you should.
             </p>
           </div>
@@ -228,6 +239,7 @@ export default async function HomePage() {
           <div className="marketing-grid">
             {pillars.map((item) => (
               <article className="marketing-card feature-card fade-up" key={item.title}>
+                {(item as any).img && <img src={(item as any).img} alt={item.title} style={{ width: "100%", height: 160, objectFit: "cover", borderRadius: 12, marginBottom: 16 }} />}
                 <div className="feature-card__emoji">{item.icon}</div>
                 <h3>{item.title}</h3>
                 <p>{item.body}</p>
@@ -240,14 +252,14 @@ export default async function HomePage() {
 
         <div className="glow-divider" />
 
-        {/* ── LOGOS — How it works ── */}
+        {/* ── LOGOS  -  How it works ── */}
         <section className="container marketing-section" id="how-it-works">
           <div className="section-heading fade-up">
             <div className="eyebrow">How it works</div>
             <h2>From chaos to confident in five steps.</h2>
             <p className="section-copy">
               No steep learning curve. No bloated onboarding. Just the setup that
-              actually moves your release ops forward — in one session.
+              actually moves your release ops forward  -  in one session.
             </p>
           </div>
 
@@ -266,21 +278,21 @@ export default async function HomePage() {
 
         <div className="glow-divider" />
 
-        {/* ── ETHOS — Trust & credibility ── */}
+        {/* ── ETHOS  -  Trust & credibility ── */}
         <section className="container marketing-section">
           <div className="ethos-banner marketing-card fade-up">
             <div className="ethos-banner__left">
               <div className="eyebrow">Why trust AIArtistVault</div>
               <h2>Built by people who get the independent music grind.</h2>
               <p className="section-copy">
-                We didn&apos;t build this for labels with full ops teams. We built it for the
+                We didn't build this for labels with full ops teams. We built it for the
                 artist who is also their own manager, PR rep, and metadata coordinator.
                 Every feature exists because an independent artist needed it.
               </p>
               <ul className="ethos-list">
-                <li>✦ Private by default — your vault is yours alone</li>
-                <li>✦ No lock-in — works alongside your existing distributor</li>
-                <li>✦ Import-ready — DistroKid &amp; SoundOn support built in</li>
+                <li>✦ Private by default  -  your vault is yours alone</li>
+                <li>✦ No lock-in  -  works alongside your existing distributor</li>
+                <li>✦ Import-ready  -  DistroKid &amp; SoundOn support built in</li>
                 <li>✦ Designed for AI artists, not just traditional musicians</li>
               </ul>
             </div>
@@ -296,20 +308,20 @@ export default async function HomePage() {
                 </div>
                 <div className="ethos-stat">
                   <span className="ethos-stat__num">Free</span>
-                  <span className="ethos-stat__label">To start — always</span>
+                  <span className="ethos-stat__label">To start  -  always</span>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* ── LOGOS — Pricing ── */}
+        {/* ── LOGOS  -  Pricing ── */}
         <section className="container marketing-section" id="pricing">
           <div className="section-heading fade-up">
             <div className="eyebrow">Pricing</div>
-            <h2>Start free. Scale when you&apos;re ready.</h2>
+            <h2>Start free. Scale when you're ready.</h2>
             <p className="section-copy">
-              No paywalls on the features that matter most when you&apos;re just getting organized.
+              No paywalls on the features that matter most when you're just getting organized.
             </p>
           </div>
 
@@ -372,7 +384,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* ── PATHOS CTA — Emotional close ── */}
+        {/* ── PATHOS CTA  -  Emotional close ── */}
         <section className="container marketing-section">
           <div className="cta-banner marketing-card">
             <div>
@@ -380,7 +392,7 @@ export default async function HomePage() {
               <h2>Stop letting the business side of music slow you down.</h2>
               <p className="section-copy">
                 You make the music. We handle the chaos around it.
-                Get your vault, your rights, and your press assets locked in — so your next
+                Get your vault, your rights, and your press assets locked in  -  so your next
                 release goes out with everything already in order.
               </p>
             </div>

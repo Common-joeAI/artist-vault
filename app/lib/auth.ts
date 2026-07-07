@@ -1,5 +1,5 @@
 /**
- * auth.ts — Multi-tenant authentication for Artist Vault
+ * auth.ts  -  Multi-tenant authentication for Artist Vault
  *
  * Features:
  * - Public signup with email verification

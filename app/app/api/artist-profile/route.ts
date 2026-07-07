@@ -1,41 +1,52 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { requireSession } from '@/lib/auth';
-import { getPrimaryArtistProfile } from '@/lib/artist-vault';
-import { db } from '@/lib/db';
+import { NextResponse } from "next/server";
+import { getSession } from "@/lib/auth";
+import { db } from "@/lib/db";
 
-function slugify(name: string) {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+// GET — list profiles for current user
+export async function GET() {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const profiles = await db.artistProfile.findMany({
+    where: { ownerUserId: session.userId },
+    include: { links: true },
+    orderBy: { createdAt: "asc" },
+  });
+
+  return NextResponse.json({ profiles });
 }
 
-export async function PATCH(req: NextRequest) {
-  try {
-    const session = await requireSession();
-    const artist = await getPrimaryArtistProfile(session.userId);
-    if (!artist) return NextResponse.json({ error: 'No artist profile' }, { status: 400 });
+// POST — create a new profile (gated by isPaid)
+export async function POST(request: Request) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const body = await req.json();
-    const updates: Record<string, unknown> = {};
+  const user = await db.user.findUnique({
+    where: { id: session.userId },
+    select: { isPaid: true },
+  });
 
-    if (typeof body.isPublic === 'boolean') updates.isPublic = body.isPublic;
-    if (typeof body.bio === 'string') updates.bio = body.bio;
-    if (typeof body.location === 'string') updates.location = body.location;
-    if (typeof body.website === 'string') updates.website = body.website;
-    if (typeof body.genres === 'string') updates.genres = body.genres;
+  const existingCount = await db.artistProfile.count({
+    where: { ownerUserId: session.userId },
+  });
 
-    // Auto-generate slug if going public and no slug yet
-    if (body.isPublic && !artist.slug) {
-      const base = slugify(artist.name);
-      let slug = base;
-      let i = 1;
-      while (await db.artistProfile.findUnique({ where: { slug } })) {
-        slug = `${base}-${i++}`;
-      }
-      updates.slug = slug;
-    }
-
-    const updated = await db.artistProfile.update({ where: { id: artist.id }, data: updates });
-    return NextResponse.json({ artist: updated });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+  // Free users capped at 1 profile
+  if (!user?.isPaid && existingCount >= 1) {
+    return NextResponse.json(
+      { error: "UPGRADE_REQUIRED", message: "Free accounts are limited to 1 artist profile. Upgrade to Pro for unlimited profiles." },
+      { status: 403 }
+    );
   }
+
+  const body = await request.json();
+  const profile = await db.artistProfile.create({
+    data: {
+      name: body.name ?? "New Artist Profile",
+      bio: body.bio ?? null,
+      photoUrl: body.photoUrl ?? null,
+      ownerUser: { connect: { id: session.userId } },
+    },
+  });
+
+  return NextResponse.json({ profile });
 }

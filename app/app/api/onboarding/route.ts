@@ -12,6 +12,9 @@ const onboardingSchema = z.object({
   youtubeMusicUrl: z.string().trim().url("YouTube URL must be valid.").or(z.literal("")),
   websiteUrl: z.string().trim().url("Website URL must be valid.").or(z.literal("")),
   otherUrl: z.string().trim().url("Other URL must be valid.").or(z.literal("")),
+  proOrg: z.enum(["ASCAP", "BMI", "SESAC", ""]).optional().transform(v => v === "" ? undefined : v),
+  proMemberId: z.string().trim().optional(),
+  producerIpiNumber: z.string().trim().optional(),
 });
 
 export async function POST(request: Request) {
@@ -27,9 +30,7 @@ export async function POST(request: Request) {
 
     const existing = await db.artistProfile.findFirst({
       where: session.userId ? { ownerUserId: session.userId } : undefined,
-      orderBy: {
-        createdAt: "asc",
-      },
+      orderBy: { createdAt: "asc" },
     });
 
     const links = [
@@ -47,17 +48,14 @@ export async function POST(request: Request) {
           name: data.name,
           bio: data.bio || null,
           photoUrl: data.photoUrl || null,
-          ownerUserId: session.userId ?? existing.ownerUserId ?? null,
         },
       });
 
-      await db.artistLink.deleteMany({
-        where: { artistId: existing.id },
-      });
+      await db.artistLink.deleteMany({ where: { artistId: existing.id } });
 
       if (links.length) {
         await db.artistLink.createMany({
-          data: links.map((link) => ({
+          data: links.map(link => ({
             artistId: existing.id,
             platform: link.platform,
             label: link.label,
@@ -68,16 +66,16 @@ export async function POST(request: Request) {
     } else {
       const created = await db.artistProfile.create({
         data: {
-          ownerUserId: session.userId ?? null,
           name: data.name,
           bio: data.bio || null,
           photoUrl: data.photoUrl || null,
+          ...(session.userId ? { ownerUser: { connect: { id: session.userId } } } : {}),
         },
       });
 
       if (links.length) {
         await db.artistLink.createMany({
-          data: links.map((link) => ({
+          data: links.map((link: { platform: string; url: string; label: string }) => ({
             artistId: created.id,
             platform: link.platform,
             label: link.label,
@@ -87,12 +85,26 @@ export async function POST(request: Request) {
       }
     }
 
+    // Save PRO fields to the User record (that's where the schema defines them)
+    if (session.userId) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const userDb = db.user as any;
+      await userDb.update({
+        where: { id: session.userId },
+        data: {
+          ...(data.proOrg ? { proOrg: data.proOrg } : {}),
+          ...(data.proMemberId ? { proMemberId: data.proMemberId } : {}),
+          ...(data.producerIpiNumber ? { producerIpiNumber: data.producerIpiNumber } : {}),
+        },
+      });
+    }
+
     return NextResponse.json({ ok: true });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.issues[0]?.message ?? "Validation failed." }, { status: 400 });
     }
-
+    console.error("Onboarding error:", error);
     return NextResponse.json({ error: "Unable to save onboarding data." }, { status: 500 });
   }
 }

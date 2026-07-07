@@ -16,7 +16,7 @@ function parseJson<T>(s: string|null|undefined): T[] {
   if (!s) return []; try { return JSON.parse(s); } catch { return []; }
 }
 
-const s: Record<string, React.CSSProperties> = {
+const s: Record<string, any> = {
   page: { minHeight:'100vh', background:'#0a0a0f', color:'#fff', fontFamily:'system-ui,sans-serif' },
   hero: { background:'linear-gradient(180deg,rgba(124,58,237,0.2) 0%,transparent 100%)', padding:'4rem 1rem 2rem', textAlign:'center' as const },
   h1: { fontSize:'2.2rem', fontWeight:900, marginBottom:8 },
@@ -94,7 +94,7 @@ export default function CollabPage() {
     <div style={s.page}>
       <div style={s.hero}>
         <h1 style={s.h1}>🤝 Collab Board</h1>
-        <p style={s.sub}>Find AI artists to collaborate with — or offer your skills to the community</p>
+        <p style={s.sub}>Find AI artists to collaborate with  -  or offer your skills to the community</p>
         <button style={s.postBtn} onClick={() => setShowModal(true)}>+ Post Collab</button>
         <div style={s.filterRow}>
           <button style={s.filterBtn(filterType==='')} onClick={() => setFilterType('')}>All Posts</button>
@@ -110,7 +110,7 @@ export default function CollabPage() {
           <div style={s.emptyState}>
             <div style={{ fontSize:'3rem', marginBottom:12 }}>🤝</div>
             <div style={{ fontWeight:700, fontSize:'1.1rem', marginBottom:8 }}>No collab posts yet</div>
-            <div style={{ marginBottom:20 }}>Be the first to post — the community is waiting.</div>
+            <div style={{ marginBottom:20 }}>Be the first to post  -  the community is waiting.</div>
             <button style={s.postBtn} onClick={() => setShowModal(true)}>+ Post Collab</button>
           </div>
         ) : (

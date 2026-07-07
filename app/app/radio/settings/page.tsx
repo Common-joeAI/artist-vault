@@ -6,7 +6,7 @@ import styles from "../radio.module.css";
 import Link from "next/link";
 
 export const metadata = {
-  title: "Station Settings — Artist Vault",
+  title: "Station Settings  -  Artist Vault",
 };
 
 export default async function RadioSettingsPage() {

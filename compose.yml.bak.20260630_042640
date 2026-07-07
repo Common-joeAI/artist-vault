@@ -1,0 +1,48 @@
+services:
+  artist-vault:
+    build: ./app
+    container_name: artist-vault
+    restart: unless-stopped
+    env_file:
+      - ./app/.env
+    volumes:
+      - ./data/dev.db:/app/dev.db
+      - ./data/uploads:/app/public/uploads
+      - ./data/uploads:/app/.next/standalone/public/uploads
+      - ./data/storage:/app/storage
+      - ./data/storage:/app/.next/standalone/storage
+    network_mode: host
+    environment:
+      PORT: "3002"
+      NODE_ENV: production
+      HOSTNAME: "0.0.0.0"
+    command:
+      [
+        "sh",
+        "-c",
+        "node_modules/.bin/prisma migrate deploy 2>/dev/null || true && mkdir -p .next/standalone/.next && rm -rf .next/standalone/.next/static && cp -r .next/static .next/standalone/.next/static && mkdir -p .next/standalone/public && cp -rn public/. .next/standalone/public/. && mkdir -p .next/standalone/public/uploads && cd .next/standalone && HOSTNAME=0.0.0.0 PORT=3002 node server.js"
+      ]
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "const net=require('net'); const s=net.connect(3002,'127.0.0.1',()=>{s.end();process.exit(0)}); s.on('error',()=>process.exit(1)); s.setTimeout(5000,()=>{s.destroy();process.exit(1)});"
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
+
+  backup-sidecar:
+    image: alpine:latest
+    container_name: artist-vault-backup
+    restart: always
+    volumes:
+      - ./data/dev.db:/db/dev.db:ro
+      - ./data/backups:/db/backups
+      - ./scripts/backup-db.sh:/backup.sh:ro
+    entrypoint: sh -c "while true; do sh /backup.sh; sleep 86400; done"
+    profiles:
+      - backup

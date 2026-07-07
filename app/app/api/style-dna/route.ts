@@ -77,7 +77,7 @@ Recent prompts: ${prompts.slice(0,5).map(p => p.promptText.slice(0,80)).join(' |
 `.trim();
 
     const completion = await groq.chat.completions.create({
-      model: 'llama3-8b-8192',
+      model: 'llama-3.1-8b-instant',
       messages: [{
         role: 'user',
         content: `You are a music curator. Based on this AI artist's vault data, write their Style DNA.

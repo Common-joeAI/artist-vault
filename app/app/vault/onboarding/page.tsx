@@ -28,6 +28,7 @@ export default async function VaultOnboardingPage() {
           youtubeMusicUrl: links.get("youtube_music") ?? "",
           websiteUrl: links.get("website") ?? "",
           otherUrl: links.get("other") ?? "",
+          proOrg: (profile as any)?.proOrg ?? "",
         }}
       />
     </div>

@@ -152,17 +152,16 @@ const UI_NOISE_PATTERNS: RegExp[] = [
 ];
 
 function denoiseVisibleText(raw: string): string {
-  return raw
-    .split(/\s{2,}|[
-
-|]+/)
-    .map(l => l.trim())
-    .filter(l => {
-      if (l.length < 2 || l.length > 150) return false;
-      return !UI_NOISE_PATTERNS.some(p => p.test(l));
-    })
-    .slice(0, 800)
-    .join(' | ');
+  const out: string[] = [];
+  const segs = raw.split("|");
+  for (let s = 0; s < segs.length; s++) {
+    const nlines = segs[s].split(String.fromCharCode(10));
+    for (let n = 0; n < nlines.length; n++) {
+      const t = nlines[n].split(String.fromCharCode(13)).join("").trim();
+      if (t.length >= 2 && t.length <= 150 && !UI_NOISE_PATTERNS.some(p => p.test(t))) out.push(t);
+    }
+  }
+  return out.slice(0, 800).join(" | ");
 }
 
 function safeHttpUrl(value: string) {

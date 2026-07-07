@@ -13,7 +13,6 @@ async function createUniqueSlug(base: string, currentId?: string) {
   const root = slugify(base) || "press-kit";
   let candidate = root;
   let counter = 1;
-
   while (true) {
     const existing = await db.pressKit.findUnique({ where: { slug: candidate }, select: { id: true } });
     if (!existing || existing.id === currentId) return candidate;
@@ -26,14 +25,14 @@ export async function savePressKitAction(formData: FormData) {
   await requireSession();
 
   const artist = await getPrimaryArtistProfile();
-
-  if (!artist) {
-    redirect("/vault/onboarding");
-  }
+  if (!artist) redirect("/vault/onboarding");
 
   const existing = artist.pressKits[0];
   const baseTitle = String(formData.get("title") ?? "").trim() || `${artist.name} Press Kit`;
   const slug = await createUniqueSlug(artist.name, existing?.id);
+
+  // Featured release IDs  -  multi-value checkbox
+  const featuredReleaseIds = formData.getAll("featuredReleaseIds").map(String).filter(Boolean);
 
   const data = {
     title: baseTitle,
@@ -44,20 +43,14 @@ export async function savePressKitAction(formData: FormData) {
     heroImageUrl: String(formData.get("heroImageUrl") ?? "").trim() || null,
     websiteUrl: String(formData.get("websiteUrl") ?? "").trim() || null,
     contactEmail: String(formData.get("contactEmail") ?? "").trim() || null,
+    featuredTrackIds: featuredReleaseIds.length ? JSON.stringify(featuredReleaseIds) : null,
+    radioFormat: formData.get("radioFormat") === "1",
   };
 
   if (existing) {
-    await db.pressKit.update({
-      where: { id: existing.id },
-      data,
-    });
+    await db.pressKit.update({ where: { id: existing.id }, data });
   } else {
-    await db.pressKit.create({
-      data: {
-        artistId: artist.id,
-        ...data,
-      },
-    });
+    await db.pressKit.create({ data: { artistId: artist.id, ...data } });
   }
 
   redirect("/vault/press-kit");

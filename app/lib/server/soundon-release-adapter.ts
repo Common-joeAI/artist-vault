@@ -76,7 +76,7 @@ export function sanitizeSoundOnPayload(body: unknown): {
   const payload = body as Record<string, unknown>;
 
   if (payload.provider !== "soundon") {
-    throw new Error("Invalid provider — expected 'soundon'.");
+    throw new Error("Invalid provider  -  expected 'soundon'.");
   }
 
   if (typeof payload.session_token !== "string" || !payload.session_token.trim()) {

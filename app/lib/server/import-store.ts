@@ -1,5 +1,5 @@
 /**
- * import-store.ts — DB-backed import session store
+ * import-store.ts  -  DB-backed import session store
  * SQLite-compatible version (JSON fields stored as strings)
  * Supports: distrokid | soundon
  */

@@ -42,7 +42,7 @@ async function searchSpotify(artistName: string): Promise<DiscoveredRelease[]> {
   const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) {
-    console.warn("Spotify credentials not configured — skipping.");
+    console.warn("Spotify credentials not configured  -  skipping.");
     return [];
   }
 
@@ -122,7 +122,7 @@ async function searchYouTube(artistName: string): Promise<DiscoveredRelease[]> {
   const apiKey = process.env.YOUTUBE_API_KEY;
 
   if (!apiKey) {
-    console.warn("YouTube API key not configured — skipping.");
+    console.warn("YouTube API key not configured  -  skipping.");
     return [];
   }
 
@@ -204,7 +204,7 @@ async function crossReferenceWithVault(
 }
 
 // ─────────────────────────────────────────────
-// AI analysis — Groq (free) with static fallback
+// AI analysis  -  Groq (free) with static fallback
 // ─────────────────────────────────────────────
 
 async function analyzeWithAI(
@@ -234,7 +234,7 @@ async function analyzeWithAI(
           Authorization: `Bearer ${groqKey}`,
         },
         body: JSON.stringify({
-          model: "llama3-8b-8192",
+          model: "llama-3.1-8b-instant",
           max_tokens: 400,
           messages: [
             {

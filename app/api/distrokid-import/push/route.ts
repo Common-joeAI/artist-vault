@@ -6,7 +6,8 @@ import {
   markSessionRunning,
   saveRawPayload,
 } from "../_lib/distrokid-import-store";
-import { persistImportedReleaseDrafts, sanitizeIncomingPayload } from "../_lib/distrokid-release-adapter";
+// Use the real DB-backed adapter from lib/server instead of the file-only stub
+import { persistImportedReleaseDrafts, sanitizeIncomingPayload } from "@/lib/server/distrokid-release-adapter";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
